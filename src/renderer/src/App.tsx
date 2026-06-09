@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import type { AIStatus } from '@shared/ai'
 import { modules, getModule } from './modules/registry'
 import { useUsageMeter } from './store/useUsageMeter'
+import { useLibrary } from './store/useLibrary'
 
 export default function App(): JSX.Element {
   const [activeId, setActiveId] = useState(modules[0].id)
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
   const usage = useUsageMeter()
+  const activeProject = useLibrary((s) => s.active)
 
   useEffect(() => {
     void window.authoros.ai.status().then(setAiStatus)
@@ -21,7 +23,9 @@ export default function App(): JSX.Element {
       <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-panel/60">
         <div className="px-5 py-5">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan">AuthorOS</div>
-          <div className="text-lg font-semibold">Workspace</div>
+          <div className="truncate text-lg font-semibold" title={activeProject?.title}>
+            {activeProject?.title ?? 'Workspace'}
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3">

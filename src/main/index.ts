@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
 import { registerIpc } from './ipc'
+import { initDatabase } from './data/db'
+import { SqliteProjectRepository } from './data/sqlite-repository'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -33,8 +35,9 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
-  registerIpc(ipcMain)
+app.whenReady().then(async () => {
+  const db = await initDatabase(join(app.getPath('userData'), 'authoros-data'))
+  registerIpc(ipcMain, new SqliteProjectRepository(db))
   createWindow()
 
   app.on('activate', () => {
