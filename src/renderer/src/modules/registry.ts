@@ -8,6 +8,7 @@ import { CharactersView } from './views/CharactersView'
 import { TimelineView } from './views/TimelineView'
 import { WorldView } from './views/WorldView'
 import { AiEditorView } from './views/AiEditorView'
+import { PlotView } from './views/PlotView'
 import { PublishingView } from './views/PublishingView'
 import { SearchSnapshotsView } from './views/SearchSnapshotsView'
 import { SettingsView } from './views/SettingsView'
@@ -90,6 +91,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: TimelineView
+  },
+  {
+    id: 'plot',
+    epic: 8,
+    title: 'Trama',
+    icon: '🧩',
+    release: 'V1',
+    status: 'ready',
+    component: PlotView
   },
   {
     id: 'editor',

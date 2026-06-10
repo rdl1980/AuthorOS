@@ -28,6 +28,7 @@ import type {
   WorldRepository
 } from './data/types'
 import type { SettingsRepository } from './data/settings-repository'
+import type { PlotService } from './data/plot-service'
 import type { SearchService } from './data/search-service'
 import type { SnapshotService } from './data/snapshot-service'
 import { PublishingService } from './export/publishing'
@@ -43,6 +44,7 @@ interface Deps {
   settings: SettingsRepository
   searchService: SearchService
   snapshots: SnapshotService
+  plot: PlotService
 }
 
 type LiveProvider = Exclude<AIProviderId, 'mock'>
@@ -51,7 +53,7 @@ type LiveProvider = Exclude<AIProviderId, 'mock'>
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
 export function registerIpc(
   ipc: IpcMain,
-  { projects, manuscript, styles, structure, characters, timeline, world, settings, searchService, snapshots }: Deps
+  { projects, manuscript, styles, structure, characters, timeline, world, settings, searchService, snapshots, plot }: Deps
 ): void {
   const ai = new AIGateway(() => settings.resolveAi())
   const publishing = new PublishingService(projects, manuscript, structure)
@@ -165,6 +167,9 @@ export function registerIpc(
     characters.addArcStep(arcId, chapterId, description)
   )
   ipc.handle('char:arcStepRemove', (_e, id: string) => characters.removeArcStep(id))
+
+  // Plot Intelligence (Epic 8)
+  ipc.handle('plot:analyze', (_e, projectId: string) => plot.analyze(projectId))
 
   // Ricerca & Snapshot (Epic 24)
   ipc.handle('search:query', (_e, projectId: string, q: string) =>

@@ -102,6 +102,29 @@ export function composeAssist(kind: AssistKind, payload: string): Composed {
         user: payload.trim(),
         maxTokens: 1500
       }
+    case 'plot-holes':
+      return {
+        system:
+          'Sei un editor strutturale esperto. Analizza il manoscritto fornito (capitoli marcati con # e scene con ##) ' +
+          'e individua i plot hole: contraddizioni logiche, fili narrativi aperti e mai chiusi, motivazioni mancanti, ' +
+          'oggetti o informazioni che compaiono dal nulla, eventi impossibili rispetto a quanto stabilito prima. ' +
+          'Rispondi in italiano con un elenco numerato: per ogni problema indica dove si manifesta (capitolo/scena), ' +
+          'perché è un buco e una proposta di soluzione in una riga. ' +
+          'Se la trama regge, scrivi solo: "Nessun plot hole rilevante individuato." Niente preamboli.',
+        user: payload.trim(),
+        maxTokens: 2000
+      }
+    case 'plot-scene-audit':
+      return {
+        system:
+          'Sei un editor strutturale. Per ogni scena del manoscritto fornito (capitoli # e scene ##) valuta se fa ' +
+          'avanzare la trama, sviluppa un personaggio o costruisce il mondo. Rispondi in italiano elencando SOLO le ' +
+          'scene deboli: per ciascuna indica capitolo/scena, cosa non sta facendo e se conviene tagliarla, fonderla o ' +
+          'rafforzarla (con come). Se tutte le scene lavorano, scrivi solo: "Tutte le scene hanno una funzione." ' +
+          'Niente preamboli.',
+        user: payload.trim(),
+        maxTokens: 2000
+      }
   }
 }
 

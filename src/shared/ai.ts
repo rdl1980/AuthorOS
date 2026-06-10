@@ -45,6 +45,7 @@ export interface AIStatus {
  * - character-conflicts: suggerisce conflitti e obiettivi (US-5.5)
  * - coherence-check: segnala incoerenze in scheda/arco (US-6.4, US-5.4)
  * - editor-*: revisione del testo per l'AI Editor (Epic 10)
+ * - plot-holes / plot-scene-audit: analisi della trama (Epic 8)
  */
 export type AssistKind =
   | 'character-profile'
@@ -54,3 +55,5 @@ export type AssistKind =
   | 'editor-dialogue'
   | 'editor-show-dont-tell'
   | 'editor-pacing'
+  | 'plot-holes'
+  | 'plot-scene-audit'

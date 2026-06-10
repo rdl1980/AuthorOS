@@ -50,7 +50,9 @@ describe('AIGateway.assist (Epic 5/6)', () => {
       'editor-info-dump',
       'editor-dialogue',
       'editor-show-dont-tell',
-      'editor-pacing'
+      'editor-pacing',
+      'plot-holes',
+      'plot-scene-audit'
     ] as const) {
       const res = await gw.assist(kind, 'Una ladra gentiluomo cresciuta nei bassifondi')
       expect(res.text.length).toBeGreaterThan(0)

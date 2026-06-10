@@ -35,6 +35,7 @@ import type {
 import type { AIProviderId, AppSettings, SettingsUpdate } from '@shared/settings'
 import type { ExportResult, ImportResult } from '@shared/publishing'
 import type { SearchResult, SnapshotMeta } from '@shared/search'
+import type { PlotReport } from '@shared/plot'
 
 // API tipata esposta al renderer. Nessun accesso diretto a Node/Electron dal renderer:
 // tutto passa da questi canali (context isolation).
@@ -133,6 +134,9 @@ const api = {
     arcStepAdd: (arcId: string, chapterId: string, description: string): Promise<ArcStep> =>
       ipcRenderer.invoke('char:arcStepAdd', arcId, chapterId, description),
     arcStepRemove: (id: string): Promise<boolean> => ipcRenderer.invoke('char:arcStepRemove', id)
+  },
+  plot: {
+    analyze: (projectId: string): Promise<PlotReport> => ipcRenderer.invoke('plot:analyze', projectId)
   },
   search: {
     query: (projectId: string, q: string): Promise<SearchResult[]> =>

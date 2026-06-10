@@ -11,6 +11,7 @@ import { SqliteTimelineRepository } from './data/timeline-repository'
 import { SqliteWorldRepository } from './data/world-repository'
 import { SettingsRepository } from './data/settings-repository'
 import { SearchService } from './data/search-service'
+import { PlotService } from './data/plot-service'
 import { SnapshotService } from './data/snapshot-service'
 
 function createWindow(): void {
@@ -59,7 +60,8 @@ app.whenReady().then(async () => {
     world: new SqliteWorldRepository(db),
     settings,
     searchService: new SearchService(db),
-    snapshots
+    snapshots,
+    plot: new PlotService(db)
   })
 
   // Auto-snapshot del progetto attivo ogni 15 minuti, solo se cambiato (US-24.3).
