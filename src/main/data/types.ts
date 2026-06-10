@@ -1,4 +1,6 @@
 import type {
+  Beat,
+  BeatLink,
   Chapter,
   NewProject,
   NewStyleProfile,
@@ -68,4 +70,15 @@ export interface StyleRepository {
   update(id: string, patch: StyleProfileUpdate): StyleProfile | null
   setActive(projectId: string, id: string): void
   remove(id: string): boolean
+}
+
+/** Struttura narrativa: framework e beat di progetto, mapping scene↔beat (Epic 4). */
+export interface StructureRepository {
+  listBeats(projectId: string): Beat[]
+  /** Imposta il framework: rigenera i beat del progetto dal template. */
+  setFramework(projectId: string, framework: string): Beat[]
+  clear(projectId: string): void
+  links(projectId: string): BeatLink[]
+  linkScene(beatId: string, sceneId: string): void
+  unlinkScene(beatId: string, sceneId: string): void
 }

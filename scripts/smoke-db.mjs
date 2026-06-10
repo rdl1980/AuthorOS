@@ -34,10 +34,25 @@ const scenes = sqliteTable('scenes', {
   sortOrder: integer('sort_order').notNull().default(0)
 })
 
+const beats = sqliteTable('beats', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  framework: text('framework').notNull(),
+  title: text('title').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0)
+})
+const beatScenes = sqliteTable('beat_scenes', {
+  id: text('id').primaryKey(),
+  beatId: text('beat_id').notNull(),
+  sceneId: text('scene_id').notNull()
+})
+
 const DDL = `
 CREATE TABLE projects (id TEXT PRIMARY KEY, title TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
 CREATE TABLE chapters (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, title TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE scenes (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, chapter_id TEXT NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL DEFAULT '', word_count INTEGER NOT NULL DEFAULT 0, sort_order INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE beats (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, framework TEXT NOT NULL, title TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE beat_scenes (id TEXT PRIMARY KEY, beat_id TEXT NOT NULL, scene_id TEXT NOT NULL);
 `
 
 const SQL = await initSqlJs()
@@ -88,4 +103,14 @@ assert.equal(total, 6, 'stats somma parole')
 const found = db.select().from(scenes).where(and(eq(scenes.projectId, pid), eq(scenes.chapterId, c2))).all()
 assert.equal(found.length, 1, 'query and')
 
-console.log('✓ smoke-db: progetti + manoscritto (word count, reorder, move, stats) OK')
+// struttura (Epic 4): beat + mapping scena↔beat
+const b1 = id()
+db.insert(beats).values({ id: b1, projectId: pid, framework: "Hero's Journey", title: 'Ordinary World', sortOrder: 0 }).run()
+db.insert(beatScenes).values({ id: id(), beatId: b1, sceneId: s1 }).run()
+let beatLinks = db.select().from(beatScenes).where(eq(beatScenes.beatId, b1)).all()
+assert.equal(beatLinks.length, 1, 'link scena↔beat')
+db.delete(beatScenes).where(and(eq(beatScenes.beatId, b1), eq(beatScenes.sceneId, s1))).run()
+beatLinks = db.select().from(beatScenes).where(eq(beatScenes.beatId, b1)).all()
+assert.equal(beatLinks.length, 0, 'unlink scena↔beat')
+
+console.log('✓ smoke-db: progetti + manoscritto + struttura (beat, mapping) OK')

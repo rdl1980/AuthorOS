@@ -3,6 +3,7 @@ import { LibraryView } from './views/LibraryView'
 import { WritingWorkspaceView } from './views/WritingWorkspaceView'
 import { AiAssistantView } from './views/AiAssistantView'
 import { AuthorVoiceView } from './views/AuthorVoiceView'
+import { StructureView } from './views/StructureView'
 import { SettingsView } from './views/SettingsView'
 import { makePlaceholder } from './views/PlaceholderView'
 
@@ -55,8 +56,8 @@ export const modules: AppModule[] = [
     title: 'Struttura',
     icon: '🧭',
     release: 'V1',
-    status: 'planned',
-    component: makePlaceholder('Story Structure Frameworks', "Hero's Journey, Save the Cat e mapping scene↔beat.")
+    status: 'ready',
+    component: StructureView
   },
   {
     id: 'characters',

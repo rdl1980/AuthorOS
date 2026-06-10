@@ -10,13 +10,19 @@ import type {
 } from '@shared/domain'
 import type { AIProviderId, SettingsUpdate } from '@shared/settings'
 import { AIGateway } from './ai/gateway'
-import type { ManuscriptRepository, ProjectRepository, StyleRepository } from './data/types'
+import type {
+  ManuscriptRepository,
+  ProjectRepository,
+  StructureRepository,
+  StyleRepository
+} from './data/types'
 import type { SettingsRepository } from './data/settings-repository'
 
 interface Deps {
   projects: ProjectRepository
   manuscript: ManuscriptRepository
   styles: StyleRepository
+  structure: StructureRepository
   settings: SettingsRepository
 }
 
@@ -24,7 +30,10 @@ type LiveProvider = Exclude<AIProviderId, 'mock'>
 
 // Canali IPC esposti al renderer tramite il preload (window.authoros).
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
-export function registerIpc(ipc: IpcMain, { projects, manuscript, styles, settings }: Deps): void {
+export function registerIpc(
+  ipc: IpcMain,
+  { projects, manuscript, styles, structure, settings }: Deps
+): void {
   const ai = new AIGateway(() => settings.resolveAi())
 
   ipc.handle('ai:status', () => ai.status())
@@ -103,4 +112,18 @@ export function registerIpc(ipc: IpcMain, { projects, manuscript, styles, settin
     styles.setActive(projectId, id)
   )
   ipc.handle('style:remove', (_e, id: string) => styles.remove(id))
+
+  // Story Structure (Epic 4)
+  ipc.handle('structure:beats', (_e, projectId: string) => structure.listBeats(projectId))
+  ipc.handle('structure:setFramework', (_e, projectId: string, framework: string) =>
+    structure.setFramework(projectId, framework)
+  )
+  ipc.handle('structure:clear', (_e, projectId: string) => structure.clear(projectId))
+  ipc.handle('structure:links', (_e, projectId: string) => structure.links(projectId))
+  ipc.handle('structure:link', (_e, beatId: string, sceneId: string) =>
+    structure.linkScene(beatId, sceneId)
+  )
+  ipc.handle('structure:unlink', (_e, beatId: string, sceneId: string) =>
+    structure.unlinkScene(beatId, sceneId)
+  )
 }

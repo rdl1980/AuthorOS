@@ -56,6 +56,23 @@ CREATE TABLE IF NOT EXISTS style_profiles (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS beats (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  framework TEXT NOT NULL,
+  beat_key TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS beat_scenes (
+  id TEXT PRIMARY KEY,
+  beat_id TEXT NOT NULL,
+  scene_id TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_beats_project ON beats(project_id);
+CREATE INDEX IF NOT EXISTS idx_beatscenes_beat ON beat_scenes(beat_id);
 CREATE INDEX IF NOT EXISTS idx_styles_project ON style_profiles(project_id);
 CREATE INDEX IF NOT EXISTS idx_chapters_project ON chapters(project_id);
 CREATE INDEX IF NOT EXISTS idx_scenes_chapter ON scenes(chapter_id);

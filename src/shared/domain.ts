@@ -87,3 +87,22 @@ export type NewStyleProfile = Pick<StyleProfile, 'name'> &
   Partial<Pick<StyleProfile, 'tone' | 'instructions'>>
 
 export type StyleProfileUpdate = Partial<Pick<StyleProfile, 'name' | 'tone' | 'instructions'>>
+
+// --- Story Structure / Beats (Epic 4) -------------------------------------
+
+export interface Beat {
+  id: string
+  projectId: string
+  framework: string
+  beatKey: string
+  title: string
+  description: string
+  sortOrder: number
+  createdAt: string
+}
+
+/** Associazione scena↔beat (US-4.3). */
+export interface BeatLink {
+  beatId: string
+  sceneId: string
+}

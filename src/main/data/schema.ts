@@ -62,7 +62,25 @@ export const styleProfiles = sqliteTable('style_profiles', {
   updatedAt: text('updated_at').notNull()
 })
 
+export const beats = sqliteTable('beats', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  framework: text('framework').notNull(),
+  beatKey: text('beat_key').notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull().default(''),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull()
+})
+
+export const beatScenes = sqliteTable('beat_scenes', {
+  id: text('id').primaryKey(),
+  beatId: text('beat_id').notNull(),
+  sceneId: text('scene_id').notNull()
+})
+
 export type ChapterRow = typeof chapters.$inferSelect
 export type SceneRow = typeof scenes.$inferSelect
 export type NoteRow = typeof notes.$inferSelect
 export type StyleProfileRow = typeof styleProfiles.$inferSelect
+export type BeatRow = typeof beats.$inferSelect

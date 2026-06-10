@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { AIRequest, AIResult, AIStatus } from '@shared/ai'
 import type {
+  Beat,
+  BeatLink,
   Chapter,
   NewProject,
   NewStyleProfile,
@@ -91,6 +93,18 @@ const api = {
     noteDelete: (id: string): Promise<boolean> => ipcRenderer.invoke('ms:noteDelete', id),
 
     stats: (projectId: string): Promise<ProjectStats> => ipcRenderer.invoke('ms:stats', projectId)
+  },
+  structure: {
+    beats: (projectId: string): Promise<Beat[]> => ipcRenderer.invoke('structure:beats', projectId),
+    setFramework: (projectId: string, framework: string): Promise<Beat[]> =>
+      ipcRenderer.invoke('structure:setFramework', projectId, framework),
+    clear: (projectId: string): Promise<void> => ipcRenderer.invoke('structure:clear', projectId),
+    links: (projectId: string): Promise<BeatLink[]> =>
+      ipcRenderer.invoke('structure:links', projectId),
+    link: (beatId: string, sceneId: string): Promise<void> =>
+      ipcRenderer.invoke('structure:link', beatId, sceneId),
+    unlink: (beatId: string, sceneId: string): Promise<void> =>
+      ipcRenderer.invoke('structure:unlink', beatId, sceneId)
   }
 }
 
