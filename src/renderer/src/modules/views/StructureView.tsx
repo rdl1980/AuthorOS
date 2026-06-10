@@ -49,7 +49,7 @@ export function StructureView(): JSX.Element {
 
   const chooseFramework = async (framework: string): Promise<void> => {
     setBeats(await window.authoros.structure.setFramework(project.id, framework))
-    await window.authoros.projects.update(project.id, { framework })
+    await window.authoros.projects.update(project.id, { framework: framework || null })
     await reload()
   }
 

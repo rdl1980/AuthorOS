@@ -1,10 +1,10 @@
-import type { AIRequest, AIResult, AIStatus } from '@shared/ai'
+import type { AIRequest, AIResult, AIStatus, AssistKind } from '@shared/ai'
 import type { ResolvedAiConfig } from '../data/settings-repository'
 import type { AIProvider } from './providers/types'
 import { MockProvider } from './providers/mock'
 import { AnthropicProvider } from './providers/anthropic'
 import { OpenAIProvider } from './providers/openai'
-import { composeGeneration, composeStyleDerivation } from './prompt'
+import { composeAssist, composeGeneration, composeStyleDerivation } from './prompt'
 
 /**
  * Punto di passaggio unico per ogni operazione AI. Sceglie il provider in base alle
@@ -42,6 +42,13 @@ export class AIGateway {
   async deriveStyle(sample: string): Promise<AIResult> {
     const provider = this.resolveProvider()
     const { text, usage } = await provider.complete(composeStyleDerivation(sample))
+    return { text, provider: provider.name, model: provider.model, usage }
+  }
+
+  /** Operazioni ausiliarie (profilo personaggio, conflitti, verifica coerenza). */
+  async assist(kind: AssistKind, payload: string): Promise<AIResult> {
+    const provider = this.resolveProvider()
+    const { text, usage } = await provider.complete(composeAssist(kind, payload))
     return { text, provider: provider.name, model: provider.model, usage }
   }
 }

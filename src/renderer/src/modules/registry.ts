@@ -4,6 +4,7 @@ import { WritingWorkspaceView } from './views/WritingWorkspaceView'
 import { AiAssistantView } from './views/AiAssistantView'
 import { AuthorVoiceView } from './views/AuthorVoiceView'
 import { StructureView } from './views/StructureView'
+import { CharactersView } from './views/CharactersView'
 import { SettingsView } from './views/SettingsView'
 import { makePlaceholder } from './views/PlaceholderView'
 
@@ -65,8 +66,8 @@ export const modules: AppModule[] = [
     title: 'Personaggi',
     icon: '🎭',
     release: 'V1',
-    status: 'planned',
-    component: makePlaceholder('Character Bible & Arc', 'Schede personaggio, relazioni e archi di trasformazione.')
+    status: 'ready',
+    component: CharactersView
   },
   {
     id: 'timeline',

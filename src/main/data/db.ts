@@ -71,6 +71,49 @@ CREATE TABLE IF NOT EXISTS beat_scenes (
   beat_id TEXT NOT NULL,
   scene_id TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS characters (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT '',
+  summary TEXT NOT NULL DEFAULT '',
+  appearance TEXT NOT NULL DEFAULT '',
+  traits TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS relationships (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  from_id TEXT NOT NULL,
+  to_id TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS character_arcs (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL,
+  desire TEXT NOT NULL DEFAULT '',
+  need TEXT NOT NULL DEFAULT '',
+  fear TEXT NOT NULL DEFAULT '',
+  wound TEXT NOT NULL DEFAULT '',
+  lie TEXT NOT NULL DEFAULT '',
+  transformation TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS arc_steps (
+  id TEXT PRIMARY KEY,
+  arc_id TEXT NOT NULL,
+  chapter_id TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_characters_project ON characters(project_id);
+CREATE INDEX IF NOT EXISTS idx_relationships_project ON relationships(project_id);
+CREATE INDEX IF NOT EXISTS idx_arcs_character ON character_arcs(character_id);
+CREATE INDEX IF NOT EXISTS idx_arcsteps_arc ON arc_steps(arc_id);
 CREATE INDEX IF NOT EXISTS idx_beats_project ON beats(project_id);
 CREATE INDEX IF NOT EXISTS idx_beatscenes_beat ON beat_scenes(beat_id);
 CREATE INDEX IF NOT EXISTS idx_styles_project ON style_profiles(project_id);

@@ -10,7 +10,7 @@ import type {
 } from '@shared/domain'
 import { countWords } from '@shared/text'
 import type { DB } from './db'
-import { chapters, notes, scenes } from './schema'
+import { beatScenes, chapters, notes, scenes } from './schema'
 import type { ManuscriptRepository } from './types'
 
 const now = (): string => new Date().toISOString()
@@ -66,6 +66,7 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
       .all()
       .map((r) => r.id)
     if (sceneIds.length) {
+      this.orm.delete(beatScenes).where(inArray(beatScenes.sceneId, sceneIds)).run()
       this.orm.delete(notes).where(inArray(notes.sceneId, sceneIds)).run()
       this.orm.delete(scenes).where(inArray(scenes.id, sceneIds)).run()
     }
@@ -142,6 +143,7 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
   }
 
   deleteScene(id: string): boolean {
+    this.orm.delete(beatScenes).where(eq(beatScenes.sceneId, id)).run()
     this.orm.delete(notes).where(eq(notes.sceneId, id)).run()
     this.orm.delete(scenes).where(eq(scenes.id, id)).run()
     this.db.persist()

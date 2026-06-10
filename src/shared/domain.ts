@@ -106,3 +106,62 @@ export interface BeatLink {
   beatId: string
   sceneId: string
 }
+
+// --- Character Bible & Arc (Epic 6 + Epic 5) ------------------------------
+
+export interface Character {
+  id: string
+  projectId: string
+  name: string
+  role: string
+  summary: string
+  appearance: string
+  traits: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type NewCharacter = Pick<Character, 'name'> &
+  Partial<Pick<Character, 'role' | 'summary' | 'appearance' | 'traits'>>
+
+export type CharacterUpdate = Partial<
+  Pick<Character, 'name' | 'role' | 'summary' | 'appearance' | 'traits'>
+>
+
+/** Relazione orientata tra due personaggi (US-6.2). */
+export interface Relationship {
+  id: string
+  projectId: string
+  fromId: string
+  toId: string
+  label: string
+  createdAt: string
+}
+
+/** Arco di trasformazione (US-5.1/5.2): un arco per personaggio. */
+export interface CharacterArc {
+  id: string
+  characterId: string
+  desire: string
+  need: string
+  fear: string
+  wound: string
+  lie: string
+  transformation: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type ArcUpdate = Partial<
+  Pick<CharacterArc, 'desire' | 'need' | 'fear' | 'wound' | 'lie' | 'transformation'>
+>
+
+/** Tappa dell'arco collegata a un capitolo (US-5.3). */
+export interface ArcStep {
+  id: string
+  arcId: string
+  chapterId: string
+  description: string
+  sortOrder: number
+  createdAt: string
+}

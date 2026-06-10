@@ -1,9 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { AIRequest, AIResult, AIStatus } from '@shared/ai'
+import type { AIRequest, AIResult, AIStatus, AssistKind } from '@shared/ai'
 import type {
+  ArcStep,
+  ArcUpdate,
   Beat,
   BeatLink,
   Chapter,
+  Character,
+  CharacterArc,
+  CharacterUpdate,
+  NewCharacter,
+  Relationship,
   NewProject,
   NewStyleProfile,
   Note,
@@ -25,7 +32,9 @@ const api = {
     status: (): Promise<AIStatus> => ipcRenderer.invoke('ai:status'),
     generate: (req: AIRequest): Promise<AIResult> => ipcRenderer.invoke('ai:generate', req),
     deriveStyle: (sample: string): Promise<AIResult> =>
-      ipcRenderer.invoke('ai:deriveStyle', sample)
+      ipcRenderer.invoke('ai:deriveStyle', sample),
+    assist: (kind: AssistKind, payload: string): Promise<AIResult> =>
+      ipcRenderer.invoke('ai:assist', kind, payload)
   },
   settings: {
     get: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
@@ -93,6 +102,26 @@ const api = {
     noteDelete: (id: string): Promise<boolean> => ipcRenderer.invoke('ms:noteDelete', id),
 
     stats: (projectId: string): Promise<ProjectStats> => ipcRenderer.invoke('ms:stats', projectId)
+  },
+  characters: {
+    list: (projectId: string): Promise<Character[]> => ipcRenderer.invoke('char:list', projectId),
+    create: (projectId: string, input: NewCharacter): Promise<Character> =>
+      ipcRenderer.invoke('char:create', projectId, input),
+    update: (id: string, patch: CharacterUpdate): Promise<Character | null> =>
+      ipcRenderer.invoke('char:update', id, patch),
+    remove: (id: string): Promise<boolean> => ipcRenderer.invoke('char:delete', id),
+    relationships: (projectId: string): Promise<Relationship[]> =>
+      ipcRenderer.invoke('char:relationships', projectId),
+    relAdd: (projectId: string, fromId: string, toId: string, label: string): Promise<Relationship> =>
+      ipcRenderer.invoke('char:relAdd', projectId, fromId, toId, label),
+    relRemove: (id: string): Promise<boolean> => ipcRenderer.invoke('char:relRemove', id),
+    arc: (characterId: string): Promise<CharacterArc> => ipcRenderer.invoke('char:arc', characterId),
+    arcUpdate: (characterId: string, patch: ArcUpdate): Promise<CharacterArc> =>
+      ipcRenderer.invoke('char:arcUpdate', characterId, patch),
+    arcSteps: (arcId: string): Promise<ArcStep[]> => ipcRenderer.invoke('char:arcSteps', arcId),
+    arcStepAdd: (arcId: string, chapterId: string, description: string): Promise<ArcStep> =>
+      ipcRenderer.invoke('char:arcStepAdd', arcId, chapterId, description),
+    arcStepRemove: (id: string): Promise<boolean> => ipcRenderer.invoke('char:arcStepRemove', id)
   },
   structure: {
     beats: (projectId: string): Promise<Beat[]> => ipcRenderer.invoke('structure:beats', projectId),

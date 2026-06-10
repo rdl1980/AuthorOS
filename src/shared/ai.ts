@@ -38,3 +38,11 @@ export interface AIStatus {
   provider: string
   model: string
 }
+
+/**
+ * Operazioni AI ausiliarie non legate alla scrittura di prosa:
+ * - character-profile: genera una scheda personaggio da una descrizione breve (US-6.5)
+ * - character-conflicts: suggerisce conflitti e obiettivi (US-5.5)
+ * - coherence-check: segnala incoerenze in scheda/arco (US-6.4, US-5.4)
+ */
+export type AssistKind = 'character-profile' | 'character-conflicts' | 'coherence-check'

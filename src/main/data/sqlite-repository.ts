@@ -1,8 +1,21 @@
 import { randomUUID } from 'node:crypto'
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import type { NewProject, Project, ProjectUpdate } from '@shared/domain'
 import type { DB } from './db'
-import { projects, type ProjectRow } from './schema'
+import {
+  arcSteps,
+  beatScenes,
+  beats,
+  characterArcs,
+  characters,
+  chapters,
+  notes,
+  projects,
+  relationships,
+  scenes,
+  styleProfiles,
+  type ProjectRow
+} from './schema'
 import type { ProjectRepository } from './types'
 
 const toDomain = (row: ProjectRow): Project => ({
@@ -79,25 +92,197 @@ export class SqliteProjectRepository implements ProjectRepository {
     return updated
   }
 
+  /**
+   * Duplicazione profonda (US-1.4 "varianti o versioni alternative"): copia
+   * manoscritto, note, struttura (beat + link), profili di stile e personaggi
+   * (relazioni, archi, tappe) rimappando tutti gli id.
+   */
   duplicate(id: string): Project | null {
     const src = this.get(id)
     if (!src) return null
-    return this.create({
+    const orm = this.db.orm
+    const now = new Date().toISOString()
+
+    const copy = this.create({
       title: `${src.title} (copia)`,
       genre: src.genre ?? undefined,
       framework: src.framework ?? undefined,
       targetWordCount: src.targetWordCount ?? undefined
     })
+
+    // Capitoli e scene (con mappa vecchio→nuovo id)
+    const chapterMap = new Map<string, string>()
+    for (const ch of orm.select().from(chapters).where(eq(chapters.projectId, id)).all()) {
+      const nid = randomUUID()
+      chapterMap.set(ch.id, nid)
+      orm
+        .insert(chapters)
+        .values({ ...ch, id: nid, projectId: copy.id, createdAt: now, updatedAt: now })
+        .run()
+    }
+    const sceneMap = new Map<string, string>()
+    for (const sc of orm.select().from(scenes).where(eq(scenes.projectId, id)).all()) {
+      const nid = randomUUID()
+      sceneMap.set(sc.id, nid)
+      orm
+        .insert(scenes)
+        .values({
+          ...sc,
+          id: nid,
+          projectId: copy.id,
+          chapterId: chapterMap.get(sc.chapterId) ?? sc.chapterId,
+          createdAt: now,
+          updatedAt: now
+        })
+        .run()
+    }
+
+    // Note (scope rimappato)
+    for (const n of orm.select().from(notes).where(eq(notes.projectId, id)).all()) {
+      orm
+        .insert(notes)
+        .values({
+          ...n,
+          id: randomUUID(),
+          projectId: copy.id,
+          chapterId: n.chapterId ? (chapterMap.get(n.chapterId) ?? null) : null,
+          sceneId: n.sceneId ? (sceneMap.get(n.sceneId) ?? null) : null,
+          createdAt: now,
+          updatedAt: now
+        })
+        .run()
+    }
+
+    // Struttura: beat + link scena↔beat
+    const beatMap = new Map<string, string>()
+    const srcBeats = orm.select().from(beats).where(eq(beats.projectId, id)).all()
+    for (const b of srcBeats) {
+      const nid = randomUUID()
+      beatMap.set(b.id, nid)
+      orm.insert(beats).values({ ...b, id: nid, projectId: copy.id, createdAt: now }).run()
+    }
+    if (srcBeats.length) {
+      const links = orm
+        .select()
+        .from(beatScenes)
+        .where(inArray(beatScenes.beatId, srcBeats.map((b) => b.id)))
+        .all()
+      for (const l of links) {
+        const beatId = beatMap.get(l.beatId)
+        const sceneId = sceneMap.get(l.sceneId)
+        if (beatId && sceneId) {
+          orm.insert(beatScenes).values({ id: randomUUID(), beatId, sceneId }).run()
+        }
+      }
+    }
+
+    // Profili di stile
+    for (const sp of orm.select().from(styleProfiles).where(eq(styleProfiles.projectId, id)).all()) {
+      orm
+        .insert(styleProfiles)
+        .values({ ...sp, id: randomUUID(), projectId: copy.id, createdAt: now, updatedAt: now })
+        .run()
+    }
+
+    // Personaggi: schede, relazioni, archi e tappe
+    const charMap = new Map<string, string>()
+    const srcChars = orm.select().from(characters).where(eq(characters.projectId, id)).all()
+    for (const c of srcChars) {
+      const nid = randomUUID()
+      charMap.set(c.id, nid)
+      orm
+        .insert(characters)
+        .values({ ...c, id: nid, projectId: copy.id, createdAt: now, updatedAt: now })
+        .run()
+    }
+    for (const r of orm.select().from(relationships).where(eq(relationships.projectId, id)).all()) {
+      const fromId = charMap.get(r.fromId)
+      const toId = charMap.get(r.toId)
+      if (fromId && toId) {
+        orm
+          .insert(relationships)
+          .values({ id: randomUUID(), projectId: copy.id, fromId, toId, label: r.label, createdAt: now })
+          .run()
+      }
+    }
+    if (srcChars.length) {
+      const arcs = orm
+        .select()
+        .from(characterArcs)
+        .where(inArray(characterArcs.characterId, srcChars.map((c) => c.id)))
+        .all()
+      for (const a of arcs) {
+        const characterId = charMap.get(a.characterId)
+        if (!characterId) continue
+        const newArcId = randomUUID()
+        orm
+          .insert(characterArcs)
+          .values({ ...a, id: newArcId, characterId, createdAt: now, updatedAt: now })
+          .run()
+        const steps = orm.select().from(arcSteps).where(eq(arcSteps.arcId, a.id)).all()
+        for (const s of steps) {
+          orm
+            .insert(arcSteps)
+            .values({
+              ...s,
+              id: randomUUID(),
+              arcId: newArcId,
+              chapterId: chapterMap.get(s.chapterId) ?? s.chapterId,
+              createdAt: now
+            })
+            .run()
+        }
+      }
+    }
+
+    this.db.persist()
+    return copy
   }
 
   setArchived(id: string, archived: boolean): Project | null {
     return this.update(id, { status: archived ? 'archived' : 'active' })
   }
 
+  /** Rimozione a cascata: elimina tutti i dati del progetto, non solo la riga. */
   remove(id: string): boolean {
     const existing = this.get(id)
     if (!existing) return false
-    this.db.orm.delete(projects).where(eq(projects.id, id)).run()
+    const orm = this.db.orm
+
+    const beatIds = orm
+      .select({ id: beats.id })
+      .from(beats)
+      .where(eq(beats.projectId, id))
+      .all()
+      .map((r) => r.id)
+    if (beatIds.length) orm.delete(beatScenes).where(inArray(beatScenes.beatId, beatIds)).run()
+    orm.delete(beats).where(eq(beats.projectId, id)).run()
+
+    const charIds = orm
+      .select({ id: characters.id })
+      .from(characters)
+      .where(eq(characters.projectId, id))
+      .all()
+      .map((r) => r.id)
+    if (charIds.length) {
+      const arcIds = orm
+        .select({ id: characterArcs.id })
+        .from(characterArcs)
+        .where(inArray(characterArcs.characterId, charIds))
+        .all()
+        .map((r) => r.id)
+      if (arcIds.length) orm.delete(arcSteps).where(inArray(arcSteps.arcId, arcIds)).run()
+      orm.delete(characterArcs).where(inArray(characterArcs.characterId, charIds)).run()
+    }
+    orm.delete(relationships).where(eq(relationships.projectId, id)).run()
+    orm.delete(characters).where(eq(characters.projectId, id)).run()
+
+    orm.delete(notes).where(eq(notes.projectId, id)).run()
+    orm.delete(scenes).where(eq(scenes.projectId, id)).run()
+    orm.delete(chapters).where(eq(chapters.projectId, id)).run()
+    orm.delete(styleProfiles).where(eq(styleProfiles.projectId, id)).run()
+    orm.delete(projects).where(eq(projects.id, id)).run()
+
     this.db.persist()
     return true
   }

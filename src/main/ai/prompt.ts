@@ -1,4 +1,4 @@
-import type { AIRequest } from '@shared/ai'
+import type { AIRequest, AssistKind } from '@shared/ai'
 
 export interface Composed {
   system: string
@@ -31,6 +31,38 @@ export function composeGeneration(req: AIRequest): Composed {
     user += `\n\nContesto della scena:\n${req.context.trim()}`
   }
   return { system, user, maxTokens: 4096 }
+}
+
+/** Compone i prompt per le operazioni ausiliarie sui personaggi (Epic 5/6). */
+export function composeAssist(kind: AssistKind, payload: string): Composed {
+  switch (kind) {
+    case 'character-profile':
+      return {
+        system:
+          'Sei un editor che aiuta a costruire personaggi. Dalla descrizione breve fornita genera ' +
+          'una scheda personaggio in italiano con queste sezioni, una per riga, nel formato "Etichetta: testo": ' +
+          'Nome, Ruolo, Sintesi, Aspetto, Tratti. Niente preamboli né altro testo.',
+        user: payload.trim(),
+        maxTokens: 1024
+      }
+    case 'character-conflicts':
+      return {
+        system:
+          'Sei un editor narrativo. Dalla scheda personaggio fornita proponi in italiano 3 conflitti ' +
+          '(interiori o esterni) e 3 obiettivi concreti che rafforzino la trama. Elenco puntato, conciso, niente preamboli.',
+        user: payload.trim(),
+        maxTokens: 1024
+      }
+    case 'coherence-check':
+      return {
+        system:
+          'Sei un editor attento alla coerenza. Analizza la scheda e l’arco del personaggio forniti e segnala ' +
+          'in italiano eventuali incoerenze (fisiche, biografiche, psicologiche o di trasformazione) come elenco puntato. ' +
+          'Se non trovi incoerenze, scrivi solo: "Nessuna incoerenza rilevata." Niente preamboli.',
+        user: payload.trim(),
+        maxTokens: 1024
+      }
+  }
 }
 
 /** Compone il prompt per derivare un profilo di stile da un testo campione (US-23.2). */

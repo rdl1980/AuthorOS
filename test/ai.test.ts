@@ -40,6 +40,17 @@ describe('AIGateway (Epic 3, modalità ibrida)', () => {
   })
 })
 
+describe('AIGateway.assist (Epic 5/6)', () => {
+  it('genera profilo, conflitti e verifica coerenza in mock', async () => {
+    const gw = new AIGateway(mockConfig)
+    for (const kind of ['character-profile', 'character-conflicts', 'coherence-check'] as const) {
+      const res = await gw.assist(kind, 'Una ladra gentiluomo cresciuta nei bassifondi')
+      expect(res.text.length).toBeGreaterThan(0)
+      expect(res.usage.credits).toBeGreaterThan(0)
+    }
+  })
+})
+
 describe('Prompt composition', () => {
   it('include la voce dell’autore quando fornita', () => {
     const c = composeGeneration({

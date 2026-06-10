@@ -79,8 +79,52 @@ export const beatScenes = sqliteTable('beat_scenes', {
   sceneId: text('scene_id').notNull()
 })
 
+export const characters = sqliteTable('characters', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  name: text('name').notNull(),
+  role: text('role').notNull().default(''),
+  summary: text('summary').notNull().default(''),
+  appearance: text('appearance').notNull().default(''),
+  traits: text('traits').notNull().default(''),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
+export const relationships = sqliteTable('relationships', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  fromId: text('from_id').notNull(),
+  toId: text('to_id').notNull(),
+  label: text('label').notNull().default(''),
+  createdAt: text('created_at').notNull()
+})
+
+export const characterArcs = sqliteTable('character_arcs', {
+  id: text('id').primaryKey(),
+  characterId: text('character_id').notNull(),
+  desire: text('desire').notNull().default(''),
+  need: text('need').notNull().default(''),
+  fear: text('fear').notNull().default(''),
+  wound: text('wound').notNull().default(''),
+  lie: text('lie').notNull().default(''),
+  transformation: text('transformation').notNull().default(''),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
+export const arcSteps = sqliteTable('arc_steps', {
+  id: text('id').primaryKey(),
+  arcId: text('arc_id').notNull(),
+  chapterId: text('chapter_id').notNull(),
+  description: text('description').notNull().default(''),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull()
+})
+
 export type ChapterRow = typeof chapters.$inferSelect
 export type SceneRow = typeof scenes.$inferSelect
 export type NoteRow = typeof notes.$inferSelect
 export type StyleProfileRow = typeof styleProfiles.$inferSelect
 export type BeatRow = typeof beats.$inferSelect
+export type CharacterRow = typeof characters.$inferSelect

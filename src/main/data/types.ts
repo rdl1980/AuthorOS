@@ -1,7 +1,14 @@
 import type {
+  ArcStep,
+  ArcUpdate,
   Beat,
   BeatLink,
   Chapter,
+  Character,
+  CharacterArc,
+  CharacterUpdate,
+  NewCharacter,
+  Relationship,
   NewProject,
   NewStyleProfile,
   Note,
@@ -70,6 +77,30 @@ export interface StyleRepository {
   update(id: string, patch: StyleProfileUpdate): StyleProfile | null
   setActive(projectId: string, id: string): void
   remove(id: string): boolean
+}
+
+/** Character Bible (Epic 6) + Character Arc Engine (Epic 5). */
+export interface CharacterRepository {
+  // Schede (US-6.1)
+  listCharacters(projectId: string): Character[]
+  createCharacter(projectId: string, input: NewCharacter): Character
+  updateCharacter(id: string, patch: CharacterUpdate): Character | null
+  /** Elimina personaggio a cascata: arco, tappe e relazioni. */
+  deleteCharacter(id: string): boolean
+
+  // Relazioni (US-6.2)
+  listRelationships(projectId: string): Relationship[]
+  addRelationship(projectId: string, fromId: string, toId: string, label: string): Relationship
+  removeRelationship(id: string): boolean
+
+  // Arco di trasformazione (US-5.1/5.2) — creato lazy al primo accesso
+  getArc(characterId: string): CharacterArc
+  updateArc(characterId: string, patch: ArcUpdate): CharacterArc
+
+  // Tappe dell'arco collegate ai capitoli (US-5.3)
+  listArcSteps(arcId: string): ArcStep[]
+  addArcStep(arcId: string, chapterId: string, description: string): ArcStep
+  removeArcStep(id: string): boolean
 }
 
 /** Struttura narrativa: framework e beat di progetto, mapping scene↔beat (Epic 4). */

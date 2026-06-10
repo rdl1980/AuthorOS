@@ -1,6 +1,9 @@
 import type { IpcMain } from 'electron'
-import type { AIRequest } from '@shared/ai'
+import type { AIRequest, AssistKind } from '@shared/ai'
 import type {
+  ArcUpdate,
+  CharacterUpdate,
+  NewCharacter,
   NewProject,
   NewStyleProfile,
   NoteScope,
@@ -11,6 +14,7 @@ import type {
 import type { AIProviderId, SettingsUpdate } from '@shared/settings'
 import { AIGateway } from './ai/gateway'
 import type {
+  CharacterRepository,
   ManuscriptRepository,
   ProjectRepository,
   StructureRepository,
@@ -23,6 +27,7 @@ interface Deps {
   manuscript: ManuscriptRepository
   styles: StyleRepository
   structure: StructureRepository
+  characters: CharacterRepository
   settings: SettingsRepository
 }
 
@@ -32,13 +37,14 @@ type LiveProvider = Exclude<AIProviderId, 'mock'>
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
 export function registerIpc(
   ipc: IpcMain,
-  { projects, manuscript, styles, structure, settings }: Deps
+  { projects, manuscript, styles, structure, characters, settings }: Deps
 ): void {
   const ai = new AIGateway(() => settings.resolveAi())
 
   ipc.handle('ai:status', () => ai.status())
   ipc.handle('ai:generate', (_e, req: AIRequest) => ai.generate(req))
   ipc.handle('ai:deriveStyle', (_e, sample: string) => ai.deriveStyle(sample))
+  ipc.handle('ai:assist', (_e, kind: AssistKind, payload: string) => ai.assist(kind, payload))
 
   // Impostazioni & AI Config (Epic 22)
   ipc.handle('settings:get', () => settings.get())
@@ -112,6 +118,32 @@ export function registerIpc(
     styles.setActive(projectId, id)
   )
   ipc.handle('style:remove', (_e, id: string) => styles.remove(id))
+
+  // Character Bible & Arc (Epic 6 + Epic 5)
+  ipc.handle('char:list', (_e, projectId: string) => characters.listCharacters(projectId))
+  ipc.handle('char:create', (_e, projectId: string, input: NewCharacter) =>
+    characters.createCharacter(projectId, input)
+  )
+  ipc.handle('char:update', (_e, id: string, patch: CharacterUpdate) =>
+    characters.updateCharacter(id, patch)
+  )
+  ipc.handle('char:delete', (_e, id: string) => characters.deleteCharacter(id))
+  ipc.handle('char:relationships', (_e, projectId: string) =>
+    characters.listRelationships(projectId)
+  )
+  ipc.handle('char:relAdd', (_e, projectId: string, fromId: string, toId: string, label: string) =>
+    characters.addRelationship(projectId, fromId, toId, label)
+  )
+  ipc.handle('char:relRemove', (_e, id: string) => characters.removeRelationship(id))
+  ipc.handle('char:arc', (_e, characterId: string) => characters.getArc(characterId))
+  ipc.handle('char:arcUpdate', (_e, characterId: string, patch: ArcUpdate) =>
+    characters.updateArc(characterId, patch)
+  )
+  ipc.handle('char:arcSteps', (_e, arcId: string) => characters.listArcSteps(arcId))
+  ipc.handle('char:arcStepAdd', (_e, arcId: string, chapterId: string, description: string) =>
+    characters.addArcStep(arcId, chapterId, description)
+  )
+  ipc.handle('char:arcStepRemove', (_e, id: string) => characters.removeArcStep(id))
 
   // Story Structure (Epic 4)
   ipc.handle('structure:beats', (_e, projectId: string) => structure.listBeats(projectId))
