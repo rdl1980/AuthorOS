@@ -4,12 +4,15 @@ import { modules, getModule } from './modules/registry'
 import { useUsageMeter } from './store/useUsageMeter'
 import { useLibrary } from './store/useLibrary'
 import { useNav } from './store/useNav'
+import { useOnboarding } from './store/useOnboarding'
+import { OnboardingOverlay } from './components/OnboardingOverlay'
 
 export default function App(): JSX.Element {
   const { moduleId, goTo } = useNav()
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
   const usage = useUsageMeter()
   const { active: activeProject, setActive } = useLibrary()
+  const onboarding = useOnboarding()
   // Evita di sovrascrivere lastProjectId con null prima che il ripristino sia avvenuto.
   const restored = useRef(false)
 
@@ -19,6 +22,7 @@ export default function App(): JSX.Element {
     void (async () => {
       try {
         const settings = await window.authoros.settings.get()
+        if (!settings.onboardingDone) onboarding.setVisible(true)
         if (settings.lastProjectId) {
           const project = await window.authoros.projects.get(settings.lastProjectId)
           if (project && project.status === 'active') setActive(project)
@@ -41,6 +45,7 @@ export default function App(): JSX.Element {
 
   return (
     <div className="flex h-full">
+      {onboarding.visible && <OnboardingOverlay />}
       {/* Sidebar — moduli dalla registry (architettura modulare) */}
       <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-panel/60">
         <div className="px-5 py-5">

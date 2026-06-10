@@ -27,6 +27,14 @@ describe('SettingsRepository (Epic 22)', () => {
     expect(s.resolveAi().apiKey).toBeNull()
   })
 
+  it('onboardingDone parte falso e persiste una volta completato (US-25.1)', () => {
+    const dir = tempDir()
+    const a = new SettingsRepository(dir)
+    expect(a.get().onboardingDone).toBe(false)
+    a.update({ onboardingDone: true })
+    expect(new SettingsRepository(dir).get().onboardingDone).toBe(true)
+  })
+
   it('persiste impostazioni e chiave tra istanze', () => {
     const dir = tempDir()
     const a = new SettingsRepository(dir)

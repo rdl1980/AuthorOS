@@ -14,10 +14,12 @@ export interface AppSettings {
   hasOpenaiKey: boolean
   /** Ultimo progetto aperto, ripristinato all'avvio. */
   lastProjectId: string | null
+  /** Tour iniziale completato o saltato (US-25.1). */
+  onboardingDone: boolean
 }
 
 export type SettingsUpdate = Partial<
-  Pick<AppSettings, 'provider' | 'model' | 'mode' | 'language' | 'lastProjectId'>
+  Pick<AppSettings, 'provider' | 'model' | 'mode' | 'language' | 'lastProjectId' | 'onboardingDone'>
 >
 
 /** Cataloghi modelli per provider (US-22.2). */
@@ -39,5 +41,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   language: 'it',
   hasAnthropicKey: false,
   hasOpenaiKey: false,
-  lastProjectId: null
+  lastProjectId: null,
+  onboardingDone: false
 }

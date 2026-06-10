@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { AppSettings, AIProviderId, Language } from '@shared/settings'
 import { MODELS } from '@shared/settings'
+import { useOnboarding } from '../../store/useOnboarding'
 
 /** Modulo Settings & AI Config (Epic 22). API key sicura, provider/modello, modalità, lingua. */
 export function SettingsView(): JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [keyInput, setKeyInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const showOnboarding = useOnboarding((s) => s.setVisible)
 
   const reload = async (): Promise<void> => setSettings(await window.authoros.settings.get())
   useEffect(() => {
@@ -153,6 +155,17 @@ export function SettingsView(): JSX.Element {
           <option value="en">English</option>
         </select>
         {saving && <span className="text-xs text-muted">Salvataggio…</span>}
+      </section>
+
+      {/* Onboarding (Epic 25) */}
+      <section className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel/50 p-4">
+        <span className="text-sm text-muted">Introduzione all'app</span>
+        <button
+          className="ml-auto rounded-lg border border-line px-3 py-2 text-sm hover:border-cyan"
+          onClick={() => showOnboarding(true)}
+        >
+          Rivedi il tour iniziale
+        </button>
       </section>
     </div>
   )
