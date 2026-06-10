@@ -6,6 +6,7 @@ import { AuthorVoiceView } from './views/AuthorVoiceView'
 import { StructureView } from './views/StructureView'
 import { CharactersView } from './views/CharactersView'
 import { TimelineView } from './views/TimelineView'
+import { AiEditorView } from './views/AiEditorView'
 import { SettingsView } from './views/SettingsView'
 import { makePlaceholder } from './views/PlaceholderView'
 
@@ -85,8 +86,8 @@ export const modules: AppModule[] = [
     title: 'AI Editor',
     icon: '🔍',
     release: 'V1',
-    status: 'planned',
-    component: makePlaceholder('AI Editor', 'Ripetizioni, info dump, pacing e show-don\'t-tell.')
+    status: 'ready',
+    component: AiEditorView
   },
   {
     id: 'publish',

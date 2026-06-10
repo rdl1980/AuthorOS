@@ -44,5 +44,13 @@ export interface AIStatus {
  * - character-profile: genera una scheda personaggio da una descrizione breve (US-6.5)
  * - character-conflicts: suggerisce conflitti e obiettivi (US-5.5)
  * - coherence-check: segnala incoerenze in scheda/arco (US-6.4, US-5.4)
+ * - editor-*: revisione del testo per l'AI Editor (Epic 10)
  */
-export type AssistKind = 'character-profile' | 'character-conflicts' | 'coherence-check'
+export type AssistKind =
+  | 'character-profile'
+  | 'character-conflicts'
+  | 'coherence-check'
+  | 'editor-info-dump'
+  | 'editor-dialogue'
+  | 'editor-show-dont-tell'
+  | 'editor-pacing'

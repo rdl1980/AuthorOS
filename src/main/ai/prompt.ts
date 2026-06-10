@@ -62,8 +62,52 @@ export function composeAssist(kind: AssistKind, payload: string): Composed {
         user: payload.trim(),
         maxTokens: 1024
       }
+    case 'editor-info-dump':
+      return {
+        system:
+          EDITOR_BASE +
+          'Individua i blocchi espositivi (info dump): passaggi che riversano informazioni invece di drammatizzarle. ' +
+          'Per ciascuno: cita le prime parole del passaggio, spiega in una riga il problema e proponi come scioglierlo nella scena. ' +
+          'Se il testo è pulito, scrivi solo: "Nessun info dump rilevato."',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
+    case 'editor-dialogue':
+      return {
+        system:
+          EDITOR_BASE +
+          'Individua i dialoghi artificiali: battute espositive, troppo formali, prive di sottotesto o tutte uguali tra ' +
+          'personaggi diversi. Per ciascuna: citala, spiega in una riga perché suona finta e proponi una versione più credibile. ' +
+          'Se i dialoghi funzionano, scrivi solo: "I dialoghi suonano naturali."',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
+    case 'editor-show-dont-tell':
+      return {
+        system:
+          EDITOR_BASE +
+          'Individua i passaggi in cui le emozioni o i giudizi sono dichiarati invece che mostrati (tell). ' +
+          'Per ciascuno: citalo e proponi come mostrarlo con azioni, sensazioni o dettagli concreti (show). ' +
+          'Se il testo mostra già bene, scrivi solo: "Il testo mostra più che raccontare."',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
+    case 'editor-pacing':
+      return {
+        system:
+          EDITOR_BASE +
+          'Valuta il ritmo narrativo: segnala dove il testo rallenta (descrizioni o riflessioni troppo lunghe) e dove corre ' +
+          'troppo (eventi importanti liquidati in poche righe). Indica i punti citando le prime parole e proponi un aggiustamento. ' +
+          'Chiudi con un giudizio sintetico di una riga sul ritmo complessivo.',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
   }
 }
+
+const EDITOR_BASE =
+  'Sei un editor narrativo esperto. Analizza il testo fornito e rispondi in italiano con un elenco puntato conciso. ' +
+  "Non riscrivere l'intero testo e non aggiungere preamboli. "
 
 /** Compone il prompt per derivare un profilo di stile da un testo campione (US-23.2). */
 export function composeStyleDerivation(sample: string): Composed {
