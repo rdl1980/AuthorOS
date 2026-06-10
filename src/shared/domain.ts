@@ -165,3 +165,40 @@ export interface ArcStep {
   sortOrder: number
   createdAt: string
 }
+
+// --- Timeline Engine (Epic 9) ----------------------------------------------
+
+export interface TimelineEvent {
+  id: string
+  projectId: string
+  title: string
+  description: string
+  /** Etichetta temporale libera, es. "Estate 1923", "10 anni prima". */
+  whenLabel: string
+  /** Valore cronologico numerico opzionale (es. anno) usato per il check di coerenza (US-9.3). */
+  dateValue: number | null
+  /** Luogo testuale; diventerà riferimento al World Building (Epic 7) in futuro. */
+  location: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type NewTimelineEvent = Pick<TimelineEvent, 'title'> &
+  Partial<Pick<TimelineEvent, 'description' | 'whenLabel' | 'dateValue' | 'location'>>
+
+export type TimelineEventUpdate = Partial<
+  Pick<TimelineEvent, 'title' | 'description' | 'whenLabel' | 'dateValue' | 'location'>
+>
+
+/** Collegamento evento↔personaggio (US-9.2, base della timeline personale US-6.3). */
+export interface EventCharacterLink {
+  eventId: string
+  characterId: string
+}
+
+/** Incoerenza temporale rilevata (US-9.3). */
+export interface TimelineIssue {
+  eventId: string
+  message: string
+}

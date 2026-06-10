@@ -5,6 +5,7 @@ import { AiAssistantView } from './views/AiAssistantView'
 import { AuthorVoiceView } from './views/AuthorVoiceView'
 import { StructureView } from './views/StructureView'
 import { CharactersView } from './views/CharactersView'
+import { TimelineView } from './views/TimelineView'
 import { SettingsView } from './views/SettingsView'
 import { makePlaceholder } from './views/PlaceholderView'
 
@@ -75,8 +76,8 @@ export const modules: AppModule[] = [
     title: 'Timeline',
     icon: '🕒',
     release: 'V1',
-    status: 'planned',
-    component: makePlaceholder('Timeline Engine', 'Eventi, sequenze e controllo coerenza temporale.')
+    status: 'ready',
+    component: TimelineView
   },
   {
     id: 'editor',

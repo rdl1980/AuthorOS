@@ -9,11 +9,13 @@ import {
   characterArcs,
   characters,
   chapters,
+  eventCharacters,
   notes,
   projects,
   relationships,
   scenes,
   styleProfiles,
+  timelineEvents,
   type ProjectRow
 } from './schema'
 import type { ProjectRepository } from './types'
@@ -235,6 +237,36 @@ export class SqliteProjectRepository implements ProjectRepository {
       }
     }
 
+    // Timeline: eventi + collegamenti ai personaggi (rimappati)
+    const srcEvents = orm
+      .select()
+      .from(timelineEvents)
+      .where(eq(timelineEvents.projectId, id))
+      .all()
+    const eventMap = new Map<string, string>()
+    for (const ev of srcEvents) {
+      const nid = randomUUID()
+      eventMap.set(ev.id, nid)
+      orm
+        .insert(timelineEvents)
+        .values({ ...ev, id: nid, projectId: copy.id, createdAt: now, updatedAt: now })
+        .run()
+    }
+    if (srcEvents.length) {
+      const evLinks = orm
+        .select()
+        .from(eventCharacters)
+        .where(inArray(eventCharacters.eventId, srcEvents.map((e) => e.id)))
+        .all()
+      for (const l of evLinks) {
+        const eventId = eventMap.get(l.eventId)
+        const characterId = charMap.get(l.characterId)
+        if (eventId && characterId) {
+          orm.insert(eventCharacters).values({ id: randomUUID(), eventId, characterId }).run()
+        }
+      }
+    }
+
     this.db.persist()
     return copy
   }
@@ -276,6 +308,17 @@ export class SqliteProjectRepository implements ProjectRepository {
     }
     orm.delete(relationships).where(eq(relationships.projectId, id)).run()
     orm.delete(characters).where(eq(characters.projectId, id)).run()
+
+    const eventIds = orm
+      .select({ id: timelineEvents.id })
+      .from(timelineEvents)
+      .where(eq(timelineEvents.projectId, id))
+      .all()
+      .map((r) => r.id)
+    if (eventIds.length) {
+      orm.delete(eventCharacters).where(inArray(eventCharacters.eventId, eventIds)).run()
+    }
+    orm.delete(timelineEvents).where(eq(timelineEvents.projectId, id)).run()
 
     orm.delete(notes).where(eq(notes.projectId, id)).run()
     orm.delete(scenes).where(eq(scenes.projectId, id)).run()

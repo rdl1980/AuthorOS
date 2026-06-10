@@ -7,8 +7,13 @@ import type {
   Character,
   CharacterArc,
   CharacterUpdate,
+  EventCharacterLink,
   NewCharacter,
+  NewTimelineEvent,
   Relationship,
+  TimelineEvent,
+  TimelineEventUpdate,
+  TimelineIssue,
   NewProject,
   NewStyleProfile,
   Note,
@@ -101,6 +106,23 @@ export interface CharacterRepository {
   listArcSteps(arcId: string): ArcStep[]
   addArcStep(arcId: string, chapterId: string, description: string): ArcStep
   removeArcStep(id: string): boolean
+}
+
+/** Timeline Engine (Epic 9) + base della timeline personale (US-6.3). */
+export interface TimelineRepository {
+  listEvents(projectId: string): TimelineEvent[]
+  createEvent(projectId: string, input: NewTimelineEvent): TimelineEvent
+  updateEvent(id: string, patch: TimelineEventUpdate): TimelineEvent | null
+  deleteEvent(id: string): boolean
+  reorder(projectId: string, orderedIds: string[]): void
+
+  // Collegamenti evento↔personaggio (US-9.2)
+  links(projectId: string): EventCharacterLink[]
+  linkCharacter(eventId: string, characterId: string): void
+  unlinkCharacter(eventId: string, characterId: string): void
+
+  /** Incoerenze: ordine manuale che contraddice i valori cronologici (US-9.3). */
+  issues(projectId: string): TimelineIssue[]
 }
 
 /** Struttura narrativa: framework e beat di progetto, mapping scene↔beat (Epic 4). */

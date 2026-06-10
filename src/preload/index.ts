@@ -9,8 +9,13 @@ import type {
   Character,
   CharacterArc,
   CharacterUpdate,
+  EventCharacterLink,
   NewCharacter,
+  NewTimelineEvent,
   Relationship,
+  TimelineEvent,
+  TimelineEventUpdate,
+  TimelineIssue,
   NewProject,
   NewStyleProfile,
   Note,
@@ -122,6 +127,25 @@ const api = {
     arcStepAdd: (arcId: string, chapterId: string, description: string): Promise<ArcStep> =>
       ipcRenderer.invoke('char:arcStepAdd', arcId, chapterId, description),
     arcStepRemove: (id: string): Promise<boolean> => ipcRenderer.invoke('char:arcStepRemove', id)
+  },
+  timeline: {
+    events: (projectId: string): Promise<TimelineEvent[]> =>
+      ipcRenderer.invoke('tl:events', projectId),
+    create: (projectId: string, input: NewTimelineEvent): Promise<TimelineEvent> =>
+      ipcRenderer.invoke('tl:create', projectId, input),
+    update: (id: string, patch: TimelineEventUpdate): Promise<TimelineEvent | null> =>
+      ipcRenderer.invoke('tl:update', id, patch),
+    remove: (id: string): Promise<boolean> => ipcRenderer.invoke('tl:delete', id),
+    reorder: (projectId: string, ids: string[]): Promise<void> =>
+      ipcRenderer.invoke('tl:reorder', projectId, ids),
+    links: (projectId: string): Promise<EventCharacterLink[]> =>
+      ipcRenderer.invoke('tl:links', projectId),
+    link: (eventId: string, characterId: string): Promise<void> =>
+      ipcRenderer.invoke('tl:link', eventId, characterId),
+    unlink: (eventId: string, characterId: string): Promise<void> =>
+      ipcRenderer.invoke('tl:unlink', eventId, characterId),
+    issues: (projectId: string): Promise<TimelineIssue[]> =>
+      ipcRenderer.invoke('tl:issues', projectId)
   },
   structure: {
     beats: (projectId: string): Promise<Beat[]> => ipcRenderer.invoke('structure:beats', projectId),

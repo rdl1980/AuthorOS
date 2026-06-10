@@ -7,6 +7,7 @@ import { SqliteManuscriptRepository } from './data/manuscript-repository'
 import { SqliteStyleRepository } from './data/style-repository'
 import { SqliteStructureRepository } from './data/structure-repository'
 import { SqliteCharacterRepository } from './data/character-repository'
+import { SqliteTimelineRepository } from './data/timeline-repository'
 import { SettingsRepository } from './data/settings-repository'
 
 function createWindow(): void {
@@ -49,6 +50,7 @@ app.whenReady().then(async () => {
     styles: new SqliteStyleRepository(db),
     structure: new SqliteStructureRepository(db),
     characters: new SqliteCharacterRepository(db),
+    timeline: new SqliteTimelineRepository(db),
     settings: new SettingsRepository(dataDir)
   })
   createWindow()

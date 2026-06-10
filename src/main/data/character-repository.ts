@@ -10,7 +10,7 @@ import type {
   Relationship
 } from '@shared/domain'
 import type { DB } from './db'
-import { arcSteps, characterArcs, characters, relationships } from './schema'
+import { arcSteps, characterArcs, characters, eventCharacters, relationships } from './schema'
 import type { CharacterRepository } from './types'
 
 const now = (): string => new Date().toISOString()
@@ -82,6 +82,7 @@ export class SqliteCharacterRepository implements CharacterRepository {
     }
     this.orm.delete(relationships).where(eq(relationships.fromId, id)).run()
     this.orm.delete(relationships).where(eq(relationships.toId, id)).run()
+    this.orm.delete(eventCharacters).where(eq(eventCharacters.characterId, id)).run()
     this.orm.delete(characters).where(eq(characters.id, id)).run()
     this.db.persist()
     return true

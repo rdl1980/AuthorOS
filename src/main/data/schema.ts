@@ -122,6 +122,25 @@ export const arcSteps = sqliteTable('arc_steps', {
   createdAt: text('created_at').notNull()
 })
 
+export const timelineEvents = sqliteTable('timeline_events', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull().default(''),
+  whenLabel: text('when_label').notNull().default(''),
+  dateValue: integer('date_value'),
+  location: text('location').notNull().default(''),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
+export const eventCharacters = sqliteTable('event_characters', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id').notNull(),
+  characterId: text('character_id').notNull()
+})
+
 export type ChapterRow = typeof chapters.$inferSelect
 export type SceneRow = typeof scenes.$inferSelect
 export type NoteRow = typeof notes.$inferSelect

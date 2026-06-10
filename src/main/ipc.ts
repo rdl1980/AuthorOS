@@ -6,10 +6,12 @@ import type {
   NewCharacter,
   NewProject,
   NewStyleProfile,
+  NewTimelineEvent,
   NoteScope,
   ProjectUpdate,
   SceneUpdate,
-  StyleProfileUpdate
+  StyleProfileUpdate,
+  TimelineEventUpdate
 } from '@shared/domain'
 import type { AIProviderId, SettingsUpdate } from '@shared/settings'
 import { AIGateway } from './ai/gateway'
@@ -18,7 +20,8 @@ import type {
   ManuscriptRepository,
   ProjectRepository,
   StructureRepository,
-  StyleRepository
+  StyleRepository,
+  TimelineRepository
 } from './data/types'
 import type { SettingsRepository } from './data/settings-repository'
 
@@ -28,6 +31,7 @@ interface Deps {
   styles: StyleRepository
   structure: StructureRepository
   characters: CharacterRepository
+  timeline: TimelineRepository
   settings: SettingsRepository
 }
 
@@ -37,7 +41,7 @@ type LiveProvider = Exclude<AIProviderId, 'mock'>
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
 export function registerIpc(
   ipc: IpcMain,
-  { projects, manuscript, styles, structure, characters, settings }: Deps
+  { projects, manuscript, styles, structure, characters, timeline, settings }: Deps
 ): void {
   const ai = new AIGateway(() => settings.resolveAi())
 
@@ -144,6 +148,27 @@ export function registerIpc(
     characters.addArcStep(arcId, chapterId, description)
   )
   ipc.handle('char:arcStepRemove', (_e, id: string) => characters.removeArcStep(id))
+
+  // Timeline Engine (Epic 9)
+  ipc.handle('tl:events', (_e, projectId: string) => timeline.listEvents(projectId))
+  ipc.handle('tl:create', (_e, projectId: string, input: NewTimelineEvent) =>
+    timeline.createEvent(projectId, input)
+  )
+  ipc.handle('tl:update', (_e, id: string, patch: TimelineEventUpdate) =>
+    timeline.updateEvent(id, patch)
+  )
+  ipc.handle('tl:delete', (_e, id: string) => timeline.deleteEvent(id))
+  ipc.handle('tl:reorder', (_e, projectId: string, ids: string[]) =>
+    timeline.reorder(projectId, ids)
+  )
+  ipc.handle('tl:links', (_e, projectId: string) => timeline.links(projectId))
+  ipc.handle('tl:link', (_e, eventId: string, characterId: string) =>
+    timeline.linkCharacter(eventId, characterId)
+  )
+  ipc.handle('tl:unlink', (_e, eventId: string, characterId: string) =>
+    timeline.unlinkCharacter(eventId, characterId)
+  )
+  ipc.handle('tl:issues', (_e, projectId: string) => timeline.issues(projectId))
 
   // Story Structure (Epic 4)
   ipc.handle('structure:beats', (_e, projectId: string) => structure.listBeats(projectId))

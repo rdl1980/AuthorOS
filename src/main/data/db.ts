@@ -110,6 +110,25 @@ CREATE TABLE IF NOT EXISTS arc_steps (
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS timeline_events (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  when_label TEXT NOT NULL DEFAULT '',
+  date_value INTEGER,
+  location TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS event_characters (
+  id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL,
+  character_id TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_timeline_project ON timeline_events(project_id);
+CREATE INDEX IF NOT EXISTS idx_eventchars_event ON event_characters(event_id);
 CREATE INDEX IF NOT EXISTS idx_characters_project ON characters(project_id);
 CREATE INDEX IF NOT EXISTS idx_relationships_project ON relationships(project_id);
 CREATE INDEX IF NOT EXISTS idx_arcs_character ON character_arcs(character_id);
