@@ -22,3 +22,48 @@ export type NewProject = Pick<Project, 'title'> &
 export type ProjectUpdate = Partial<
   Pick<Project, 'title' | 'genre' | 'framework' | 'targetWordCount' | 'status'>
 >
+
+// --- Manoscritto (Epic 2) -------------------------------------------------
+
+export interface Chapter {
+  id: string
+  projectId: string
+  title: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Scene {
+  id: string
+  projectId: string
+  chapterId: string
+  title: string
+  content: string
+  wordCount: number
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Note {
+  id: string
+  projectId: string
+  chapterId: string | null
+  sceneId: string | null
+  content: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type SceneUpdate = Partial<Pick<Scene, 'title' | 'content'>>
+
+/** Aggregati di avanzamento per il conteggio parole/target (US-2.5). */
+export interface ProjectStats {
+  words: number
+  scenes: number
+  chapters: number
+}
+
+/** Riferimento di una nota: a una scena o a un capitolo. */
+export type NoteScope = { sceneId: string } | { chapterId: string }

@@ -19,3 +19,38 @@ export const projects = sqliteTable('projects', {
 })
 
 export type ProjectRow = typeof projects.$inferSelect
+
+export const chapters = sqliteTable('chapters', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  title: text('title').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
+export const scenes = sqliteTable('scenes', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  chapterId: text('chapter_id').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull().default(''),
+  wordCount: integer('word_count').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
+export const notes = sqliteTable('notes', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  chapterId: text('chapter_id'),
+  sceneId: text('scene_id'),
+  content: text('content').notNull().default(''),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
+export type ChapterRow = typeof chapters.$inferSelect
+export type SceneRow = typeof scenes.$inferSelect
+export type NoteRow = typeof notes.$inferSelect

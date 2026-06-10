@@ -1,6 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { AIRequest, AIResult, AIStatus } from '@shared/ai'
-import type { NewProject, Project, ProjectUpdate } from '@shared/domain'
+import type {
+  Chapter,
+  NewProject,
+  Note,
+  NoteScope,
+  Project,
+  ProjectStats,
+  ProjectUpdate,
+  Scene,
+  SceneUpdate
+} from '@shared/domain'
 
 // API tipata esposta al renderer. Nessun accesso diretto a Node/Electron dal renderer:
 // tutto passa da questi canali (context isolation).
@@ -21,6 +31,39 @@ const api = {
     setArchived: (id: string, archived: boolean): Promise<Project | null> =>
       ipcRenderer.invoke('projects:setArchived', id, archived),
     remove: (id: string): Promise<boolean> => ipcRenderer.invoke('projects:remove', id)
+  },
+  manuscript: {
+    chapters: (projectId: string): Promise<Chapter[]> =>
+      ipcRenderer.invoke('ms:chapters', projectId),
+    chapterCreate: (projectId: string, title: string): Promise<Chapter> =>
+      ipcRenderer.invoke('ms:chapterCreate', projectId, title),
+    chapterRename: (id: string, title: string): Promise<Chapter | null> =>
+      ipcRenderer.invoke('ms:chapterRename', id, title),
+    chapterDelete: (id: string): Promise<boolean> => ipcRenderer.invoke('ms:chapterDelete', id),
+    chaptersReorder: (projectId: string, ids: string[]): Promise<void> =>
+      ipcRenderer.invoke('ms:chaptersReorder', projectId, ids),
+
+    scenes: (projectId: string): Promise<Scene[]> => ipcRenderer.invoke('ms:scenes', projectId),
+    sceneGet: (id: string): Promise<Scene | null> => ipcRenderer.invoke('ms:sceneGet', id),
+    sceneCreate: (projectId: string, chapterId: string, title: string): Promise<Scene> =>
+      ipcRenderer.invoke('ms:sceneCreate', projectId, chapterId, title),
+    sceneUpdate: (id: string, patch: SceneUpdate): Promise<Scene | null> =>
+      ipcRenderer.invoke('ms:sceneUpdate', id, patch),
+    sceneDelete: (id: string): Promise<boolean> => ipcRenderer.invoke('ms:sceneDelete', id),
+    scenesReorder: (chapterId: string, ids: string[]): Promise<void> =>
+      ipcRenderer.invoke('ms:scenesReorder', chapterId, ids),
+    sceneMove: (sceneId: string, toChapterId: string, toIndex: number): Promise<void> =>
+      ipcRenderer.invoke('ms:sceneMove', sceneId, toChapterId, toIndex),
+
+    notes: (projectId: string, scope?: NoteScope): Promise<Note[]> =>
+      ipcRenderer.invoke('ms:notes', projectId, scope),
+    noteCreate: (projectId: string, scope: NoteScope, content: string): Promise<Note> =>
+      ipcRenderer.invoke('ms:noteCreate', projectId, scope, content),
+    noteUpdate: (id: string, content: string): Promise<Note | null> =>
+      ipcRenderer.invoke('ms:noteUpdate', id, content),
+    noteDelete: (id: string): Promise<boolean> => ipcRenderer.invoke('ms:noteDelete', id),
+
+    stats: (projectId: string): Promise<ProjectStats> => ipcRenderer.invoke('ms:stats', projectId)
   }
 }
 

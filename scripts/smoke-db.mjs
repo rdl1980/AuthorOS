@@ -1,55 +1,91 @@
-// Smoke test del data layer: verifica insert/select/update + persistenza (export→reload)
-// di SQLite (sql.js) + Drizzle. Esegue sotto Node puro; lo stesso WASM gira in Electron.
+// Smoke test del data layer (SQLite via sql.js + Drizzle): valida le operazioni su cui
+// poggiano i repository (progetti + manoscritto). Gira sotto Node puro; stesso WASM in Electron.
 import assert from 'node:assert'
 import { randomUUID } from 'node:crypto'
 import initSqlJs from 'sql.js'
 import { drizzle } from 'drizzle-orm/sql-js'
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
-import { eq } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
+
+const id = () => randomUUID()
+const now = () => new Date().toISOString()
+const countWords = (t) => (t.trim() ? t.trim().split(/\s+/).filter(Boolean).length : 0)
 
 const projects = sqliteTable('projects', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
-  genre: text('genre'),
-  framework: text('framework'),
-  targetWordCount: integer('target_word_count'),
   status: text('status').notNull().default('active'),
-  ownerId: text('owner_id'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull()
 })
-const DDL = `CREATE TABLE IF NOT EXISTS projects (
-  id TEXT PRIMARY KEY, title TEXT NOT NULL, genre TEXT, framework TEXT,
-  target_word_count INTEGER, status TEXT NOT NULL DEFAULT 'active', owner_id TEXT,
-  created_at TEXT NOT NULL, updated_at TEXT NOT NULL);`
+const chapters = sqliteTable('chapters', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  title: text('title').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0)
+})
+const scenes = sqliteTable('scenes', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  chapterId: text('chapter_id').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull().default(''),
+  wordCount: integer('word_count').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0)
+})
+
+const DDL = `
+CREATE TABLE projects (id TEXT PRIMARY KEY, title TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE chapters (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, title TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE scenes (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, chapter_id TEXT NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL DEFAULT '', word_count INTEGER NOT NULL DEFAULT 0, sort_order INTEGER NOT NULL DEFAULT 0);
+`
 
 const SQL = await initSqlJs()
 let raw = new SQL.Database()
 raw.run(DDL)
-let db = drizzle(raw, { schema: { projects } })
+let db = drizzle(raw, { schema: { projects, chapters, scenes } })
 
-const now = new Date().toISOString()
-const p = {
-  id: randomUUID(), title: 'Romanzo di prova', genre: 'Fantasy', framework: "Hero's Journey",
-  targetWordCount: 80000, status: 'active', ownerId: null, createdAt: now, updatedAt: now
-}
-db.insert(projects).values(p).run()
-assert.equal(db.select().from(projects).all().length, 1, 'insert+select')
+// progetto
+const pid = id()
+db.insert(projects).values({ id: pid, title: 'Romanzo', status: 'active', createdAt: now(), updatedAt: now() }).run()
 
-// persistenza: export -> reload
-const bytes = raw.export()
-raw = new SQL.Database(Buffer.from(bytes))
-db = drizzle(raw, { schema: { projects } })
-const reloaded = db.select().from(projects).where(eq(projects.id, p.id)).get()
-assert.equal(reloaded.title, 'Romanzo di prova', 'persistenza dopo reload')
-assert.equal(reloaded.framework, "Hero's Journey", 'campo framework persistito')
+// persistenza progetto (export -> reload)
+raw = new SQL.Database(Buffer.from(raw.export()))
+db = drizzle(raw, { schema: { projects, chapters, scenes } })
+assert.equal(db.select().from(projects).where(eq(projects.id, pid)).get().title, 'Romanzo', 'persistenza progetto')
 
-// update
-db.update(projects).set({ title: 'Titolo aggiornato' }).where(eq(projects.id, p.id)).run()
-assert.equal(
-  db.select().from(projects).where(eq(projects.id, p.id)).get().title,
-  'Titolo aggiornato',
-  'update'
-)
+// capitoli
+const c1 = id(), c2 = id()
+db.insert(chapters).values({ id: c1, projectId: pid, title: 'Cap 1', sortOrder: 0 }).run()
+db.insert(chapters).values({ id: c2, projectId: pid, title: 'Cap 2', sortOrder: 1 }).run()
 
-console.log('✓ smoke-db: insert, select, persistenza (reload) e update OK')
+// scene nel cap 1
+const s1 = id(), s2 = id()
+db.insert(scenes).values({ id: s1, projectId: pid, chapterId: c1, title: 'S1', content: '', wordCount: 0, sortOrder: 0 }).run()
+db.insert(scenes).values({ id: s2, projectId: pid, chapterId: c1, title: 'S2', content: '', wordCount: 0, sortOrder: 1 }).run()
+
+// update contenuto + word count
+const text1 = 'Era una notte buia e tempestosa'
+db.update(scenes).set({ content: text1, wordCount: countWords(text1) }).where(eq(scenes.id, s1)).run()
+assert.equal(db.select().from(scenes).where(eq(scenes.id, s1)).get().wordCount, 6, 'word count')
+
+// reorder scene nel cap 1 (swap)
+;[s2, s1].forEach((sid, i) => db.update(scenes).set({ sortOrder: i }).where(eq(scenes.id, sid)).run())
+const ordered = db.select().from(scenes).where(eq(scenes.chapterId, c1)).orderBy(asc(scenes.sortOrder)).all()
+assert.equal(ordered[0].id, s2, 'reorder scene')
+
+// move scena s1 nel cap 2
+db.update(scenes).set({ chapterId: c2 }).where(eq(scenes.id, s1)).run()
+const inC2 = db.select().from(scenes).where(eq(scenes.chapterId, c2)).all()
+assert.equal(inC2.length, 1, 'move scena tra capitoli')
+assert.equal(inC2[0].id, s1, 'scena spostata corretta')
+
+// stats: somma word_count del progetto
+const total = db.select().from(scenes).where(eq(scenes.projectId, pid)).all().reduce((a, r) => a + r.wordCount, 0)
+assert.equal(total, 6, 'stats somma parole')
+
+// query composta (and) — cap 2 contiene s1
+const found = db.select().from(scenes).where(and(eq(scenes.projectId, pid), eq(scenes.chapterId, c2))).all()
+assert.equal(found.length, 1, 'query and')
+
+console.log('✓ smoke-db: progetti + manoscritto (word count, reorder, move, stats) OK')

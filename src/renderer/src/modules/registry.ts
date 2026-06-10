@@ -1,5 +1,6 @@
 import type { AppModule } from './types'
 import { LibraryView } from './views/LibraryView'
+import { WritingWorkspaceView } from './views/WritingWorkspaceView'
 import { AiAssistantView } from './views/AiAssistantView'
 import { makePlaceholder } from './views/PlaceholderView'
 
@@ -25,8 +26,8 @@ export const modules: AppModule[] = [
     title: 'Workspace',
     icon: '✍️',
     release: 'V1',
-    status: 'planned',
-    component: makePlaceholder('Writing Workspace', 'Editor capitoli/scene, drag&drop, Markdown, conteggio parole e focus mode.')
+    status: 'ready',
+    component: WritingWorkspaceView
   },
   {
     id: 'ai-assistant',
