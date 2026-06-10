@@ -34,6 +34,10 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 
 ## Revisioni Backlog
 
+### v1.2 — 2026-06-10
+- **Feedback dal collaudo utente (v0.1.0):** editor scene ora **WYSIWYG** (TipTap) — il Markdown resta il formato di salvataggio ma l'autore scrive testo formattato senza sintassi (reinterpretazione corretta di US-2.4); "Apri" dalla Libreria porta nel Workspace e l'ultimo progetto aperto viene ripristinato all'avvio.
+- **Nuova US-21.5:** associazione automatica dei capitoli importati ai beat del framework selezionato (autowire import→struttura).
+
 ### v1.1 — 2026-06-09
 - **Decisioni tecniche V1:** app desktop con **Electron + React + TypeScript**; AI in modalità **ibrida** (mock di default, API key opzionale per AI reale); primo traguardo = **MVP must-have completo** costruito in fasi.
 - **Nuove epiche:** 21 Import & Interoperabilità, 22 Settings & AI Configuration, 23 Author Voice & Style Profile, 24 Local Search & Snapshots, 25 Onboarding & First-Run.
@@ -47,7 +51,7 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 > Aggiornato a: **Fase 8** (Import/Export). 🏁 **MVP V1 must-have COMPLETO**: tutti i moduli della sidebar sono attivi.
 
 - **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3
-- **In corso (🔄):** — (prossimo: Should-have V1 — Epic 24 Search & Snapshots, Epic 25 Onboarding, Epic 7 World Building, Epic 8 Plot Intelligence, Epic 14 Marketing base)
+- **In corso (🔄):** US-21.5 (autowire import→struttura). Prossimo: Should-have V1 — Epic 24 Search & Snapshots, Epic 25 Onboarding, Epic 7 World Building, Epic 8 Plot Intelligence, Epic 14 Marketing base.
 
 ---
 
@@ -524,6 +528,7 @@ Permettere all'autore di portare in AuthorOS manoscritti e materiali esistenti.
 | US-21.2 | Come autore voglio importare file Markdown/TXT, così da riusare bozze e appunti. | Must | V1 |
 | US-21.3 | Come autore voglio che l'import riconosca capitoli e scene, così da ottenere subito una struttura navigabile. | Should | V1 |
 | US-21.4 | Come autore voglio importare schede personaggi/note da CSV o testo, così da popolare rapidamente la Character Bible. | Could | V2 |
+| US-21.5 | Come autore voglio che i capitoli importati vengano associati automaticamente ai beat del framework selezionato, così da avere subito la mappa strutturale del manoscritto. | Should | V1 |
 
 ---
 

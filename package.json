@@ -1,6 +1,6 @@
 {
   "name": "authoros",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AuthorOS — scrivi il tuo libro più velocemente, senza perdere la tua voce.",
   "author": "rdl1980",
   "license": "UNLICENSED",
@@ -20,12 +20,17 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
+    "@tiptap/extension-placeholder": "^2.27.2",
+    "@tiptap/pm": "^2.27.2",
+    "@tiptap/react": "^2.27.2",
+    "@tiptap/starter-kit": "^2.27.2",
     "docx": "^9.7.1",
     "drizzle-orm": "^0.45.2",
     "jszip": "^3.10.1",
     "mammoth": "^1.12.0",
     "marked": "^18.0.5",
     "sql.js": "^1.14.1",
+    "tiptap-markdown": "^0.8.10",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

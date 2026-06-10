@@ -14,6 +14,7 @@ interface StoredSettings {
   model: string
   mode: AppSettings['mode']
   language: AppSettings['language']
+  lastProjectId: string | null
   /** Chiavi cifrate (base64) per provider. */
   keys: Partial<Record<Exclude<AIProviderId, 'mock'>, string>>
 }
@@ -42,6 +43,7 @@ export class SettingsRepository {
       model: DEFAULT_SETTINGS.model,
       mode: DEFAULT_SETTINGS.mode,
       language: DEFAULT_SETTINGS.language,
+      lastProjectId: null,
       keys: {}
     }
     if (!existsSync(this.file)) return base
@@ -86,7 +88,8 @@ export class SettingsRepository {
       mode: this.data.mode,
       language: this.data.language,
       hasAnthropicKey: Boolean(this.data.keys.anthropic),
-      hasOpenaiKey: Boolean(this.data.keys.openai)
+      hasOpenaiKey: Boolean(this.data.keys.openai),
+      lastProjectId: this.data.lastProjectId ?? null
     }
   }
 
@@ -99,6 +102,7 @@ export class SettingsRepository {
     if (patch.model) this.data.model = patch.model
     if (patch.mode) this.data.mode = patch.mode
     if (patch.language) this.data.language = patch.language
+    if (patch.lastProjectId !== undefined) this.data.lastProjectId = patch.lastProjectId
     this.save()
     return this.get()
   }

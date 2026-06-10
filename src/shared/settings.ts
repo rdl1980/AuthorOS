@@ -12,9 +12,13 @@ export interface AppSettings {
   language: Language
   hasAnthropicKey: boolean
   hasOpenaiKey: boolean
+  /** Ultimo progetto aperto, ripristinato all'avvio. */
+  lastProjectId: string | null
 }
 
-export type SettingsUpdate = Partial<Pick<AppSettings, 'provider' | 'model' | 'mode' | 'language'>>
+export type SettingsUpdate = Partial<
+  Pick<AppSettings, 'provider' | 'model' | 'mode' | 'language' | 'lastProjectId'>
+>
 
 /** Cataloghi modelli per provider (US-22.2). */
 export const MODELS: Record<Exclude<AIProviderId, 'mock'>, string[]> = {
@@ -34,5 +38,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   mode: 'mock',
   language: 'it',
   hasAnthropicKey: false,
-  hasOpenaiKey: false
+  hasOpenaiKey: false,
+  lastProjectId: null
 }

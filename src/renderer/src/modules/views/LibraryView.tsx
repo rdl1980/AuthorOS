@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Project } from '@shared/domain'
 import { GENRES, FRAMEWORKS, suggestFramework } from '@shared/frameworks'
 import { useLibrary } from '../../store/useLibrary'
+import { useNav } from '../../store/useNav'
 
 /**
  * Modulo Libreria (Epic 1) — crea, classifica, apre, duplica e archivia i progetti.
@@ -18,6 +19,13 @@ export function LibraryView(): JSX.Element {
   const [frameworkTouched, setFrameworkTouched] = useState(false)
 
   const { active, setActive } = useLibrary()
+  const goTo = useNav((s) => s.goTo)
+
+  // Apri = imposta il progetto attivo ED entra nel Workspace di scrittura.
+  const open = (p: Project): void => {
+    setActive(p)
+    goTo('writing')
+  }
 
   const refresh = async (): Promise<void> => {
     setProjects(await window.authoros.projects.list(showArchived))
@@ -133,7 +141,8 @@ export function LibraryView(): JSX.Element {
         {projects.map((p) => (
           <article
             key={p.id}
-            className={`flex flex-col rounded-2xl border bg-panel/70 p-4 ${
+            onDoubleClick={() => open(p)}
+            className={`flex cursor-pointer flex-col rounded-2xl border bg-panel/70 p-4 ${
               active?.id === p.id ? 'border-cyan' : 'border-line'
             }`}
           >
@@ -154,7 +163,7 @@ export function LibraryView(): JSX.Element {
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 className="rounded-lg bg-cyan/90 px-3 py-1.5 text-xs font-semibold text-bg hover:bg-cyan"
-                onClick={() => setActive(p)}
+                onClick={() => open(p)}
               >
                 Apri
               </button>

@@ -1,20 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AIStatus } from '@shared/ai'
 import { modules, getModule } from './modules/registry'
 import { useUsageMeter } from './store/useUsageMeter'
 import { useLibrary } from './store/useLibrary'
+import { useNav } from './store/useNav'
 
 export default function App(): JSX.Element {
-  const [activeId, setActiveId] = useState(modules[0].id)
+  const { moduleId, goTo } = useNav()
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
   const usage = useUsageMeter()
-  const activeProject = useLibrary((s) => s.active)
+  const { active: activeProject, setActive } = useLibrary()
+  // Evita di sovrascrivere lastProjectId con null prima che il ripristino sia avvenuto.
+  const restored = useRef(false)
 
   useEffect(() => {
     void window.authoros.ai.status().then(setAiStatus)
+    // Ripristina l'ultimo progetto aperto (persistito nelle settings).
+    void (async () => {
+      try {
+        const settings = await window.authoros.settings.get()
+        if (settings.lastProjectId) {
+          const project = await window.authoros.projects.get(settings.lastProjectId)
+          if (project && project.status === 'active') setActive(project)
+        }
+      } finally {
+        restored.current = true
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const active = getModule(activeId) ?? modules[0]
+  // Persiste il progetto attivo a ogni cambio (dopo il ripristino iniziale).
+  useEffect(() => {
+    if (!restored.current) return
+    void window.authoros.settings.update({ lastProjectId: activeProject?.id ?? null })
+  }, [activeProject?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const active = getModule(moduleId) ?? modules[0]
   const ActiveComponent = active.component
 
   return (
@@ -32,9 +54,9 @@ export default function App(): JSX.Element {
           {modules.map((m) => (
             <button
               key={m.id}
-              onClick={() => setActiveId(m.id)}
+              onClick={() => goTo(m.id)}
               className={`mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition ${
-                m.id === activeId ? 'bg-cyan/15 text-ink' : 'text-muted hover:bg-white/5 hover:text-ink'
+                m.id === moduleId ? 'bg-cyan/15 text-ink' : 'text-muted hover:bg-white/5 hover:text-ink'
               }`}
             >
               <span className="text-base">{m.icon}</span>
