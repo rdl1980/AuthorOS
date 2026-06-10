@@ -1,13 +1,16 @@
 import type {
   Chapter,
   NewProject,
+  NewStyleProfile,
   Note,
   NoteScope,
   Project,
   ProjectStats,
   ProjectUpdate,
   Scene,
-  SceneUpdate
+  SceneUpdate,
+  StyleProfile,
+  StyleProfileUpdate
 } from '@shared/domain'
 
 /**
@@ -55,4 +58,14 @@ export interface ManuscriptRepository {
 
   // Avanzamento (US-2.5)
   getStats(projectId: string): ProjectStats
+}
+
+/** Profili di stile / Author Voice (Epic 23). Un solo profilo attivo per progetto. */
+export interface StyleRepository {
+  list(projectId: string): StyleProfile[]
+  getActive(projectId: string): StyleProfile | null
+  create(projectId: string, input: NewStyleProfile): StyleProfile
+  update(id: string, patch: StyleProfileUpdate): StyleProfile | null
+  setActive(projectId: string, id: string): void
+  remove(id: string): boolean
 }

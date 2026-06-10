@@ -51,6 +51,18 @@ export const notes = sqliteTable('notes', {
   updatedAt: text('updated_at').notNull()
 })
 
+export const styleProfiles = sqliteTable('style_profiles', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  name: text('name').notNull(),
+  tone: text('tone').notNull().default(''),
+  instructions: text('instructions').notNull().default(''),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
 export type ChapterRow = typeof chapters.$inferSelect
 export type SceneRow = typeof scenes.$inferSelect
 export type NoteRow = typeof notes.$inferSelect
+export type StyleProfileRow = typeof styleProfiles.$inferSelect

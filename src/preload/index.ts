@@ -3,21 +3,48 @@ import type { AIRequest, AIResult, AIStatus } from '@shared/ai'
 import type {
   Chapter,
   NewProject,
+  NewStyleProfile,
   Note,
   NoteScope,
   Project,
   ProjectStats,
   ProjectUpdate,
   Scene,
-  SceneUpdate
+  SceneUpdate,
+  StyleProfile,
+  StyleProfileUpdate
 } from '@shared/domain'
+import type { AIProviderId, AppSettings, SettingsUpdate } from '@shared/settings'
 
 // API tipata esposta al renderer. Nessun accesso diretto a Node/Electron dal renderer:
 // tutto passa da questi canali (context isolation).
 const api = {
   ai: {
     status: (): Promise<AIStatus> => ipcRenderer.invoke('ai:status'),
-    generate: (req: AIRequest): Promise<AIResult> => ipcRenderer.invoke('ai:generate', req)
+    generate: (req: AIRequest): Promise<AIResult> => ipcRenderer.invoke('ai:generate', req),
+    deriveStyle: (sample: string): Promise<AIResult> =>
+      ipcRenderer.invoke('ai:deriveStyle', sample)
+  },
+  settings: {
+    get: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
+    update: (patch: SettingsUpdate): Promise<AppSettings> =>
+      ipcRenderer.invoke('settings:update', patch),
+    setKey: (provider: Exclude<AIProviderId, 'mock'>, key: string): Promise<AppSettings> =>
+      ipcRenderer.invoke('settings:setKey', provider, key),
+    clearKey: (provider: Exclude<AIProviderId, 'mock'>): Promise<AppSettings> =>
+      ipcRenderer.invoke('settings:clearKey', provider)
+  },
+  style: {
+    list: (projectId: string): Promise<StyleProfile[]> => ipcRenderer.invoke('style:list', projectId),
+    active: (projectId: string): Promise<StyleProfile | null> =>
+      ipcRenderer.invoke('style:active', projectId),
+    create: (projectId: string, input: NewStyleProfile): Promise<StyleProfile> =>
+      ipcRenderer.invoke('style:create', projectId, input),
+    update: (id: string, patch: StyleProfileUpdate): Promise<StyleProfile | null> =>
+      ipcRenderer.invoke('style:update', id, patch),
+    setActive: (projectId: string, id: string): Promise<void> =>
+      ipcRenderer.invoke('style:setActive', projectId, id),
+    remove: (id: string): Promise<boolean> => ipcRenderer.invoke('style:remove', id)
   },
   projects: {
     list: (includeArchived?: boolean): Promise<Project[]> =>

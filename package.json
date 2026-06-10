@@ -15,6 +15,7 @@
     "backlog:html": "node scripts/generate-backlog-html.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
     "drizzle-orm": "^0.45.2",
     "marked": "^18.0.5",
     "sql.js": "^1.14.1",

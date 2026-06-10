@@ -4,6 +4,8 @@ import { registerIpc } from './ipc'
 import { initDatabase } from './data/db'
 import { SqliteProjectRepository } from './data/sqlite-repository'
 import { SqliteManuscriptRepository } from './data/manuscript-repository'
+import { SqliteStyleRepository } from './data/style-repository'
+import { SettingsRepository } from './data/settings-repository'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -37,10 +39,13 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
-  const db = await initDatabase(join(app.getPath('userData'), 'authoros-data'))
+  const dataDir = join(app.getPath('userData'), 'authoros-data')
+  const db = await initDatabase(dataDir)
   registerIpc(ipcMain, {
     projects: new SqliteProjectRepository(db),
-    manuscript: new SqliteManuscriptRepository(db)
+    manuscript: new SqliteManuscriptRepository(db),
+    styles: new SqliteStyleRepository(db),
+    settings: new SettingsRepository(dataDir)
   })
   createWindow()
 

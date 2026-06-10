@@ -2,6 +2,8 @@ import type { AppModule } from './types'
 import { LibraryView } from './views/LibraryView'
 import { WritingWorkspaceView } from './views/WritingWorkspaceView'
 import { AiAssistantView } from './views/AiAssistantView'
+import { AuthorVoiceView } from './views/AuthorVoiceView'
+import { SettingsView } from './views/SettingsView'
 import { makePlaceholder } from './views/PlaceholderView'
 
 /**
@@ -37,6 +39,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: AiAssistantView
+  },
+  {
+    id: 'voice',
+    epic: 23,
+    title: 'Author Voice',
+    icon: '🎙️',
+    release: 'V1',
+    status: 'ready',
+    component: AuthorVoiceView
   },
   {
     id: 'structure',
@@ -89,8 +100,8 @@ export const modules: AppModule[] = [
     title: 'Impostazioni',
     icon: '⚙️',
     release: 'V1',
-    status: 'planned',
-    component: makePlaceholder('Settings & AI Config', 'API key sicura, scelta provider/modello, modalità mock/reale, lingua, privacy.')
+    status: 'ready',
+    component: SettingsView
   }
 ]
 

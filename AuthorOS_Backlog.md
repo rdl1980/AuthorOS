@@ -44,10 +44,10 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 ## Stato Implementazione
 
 > Legenda: ✅ completata · 🔄 in corso · ⬜ da fare. Nel backlog visuale le voci ✅ sono **barrate**.
-> Aggiornato a: **Fase 2** (Writing Workspace). Build V1 in corso, fase per fase.
+> Aggiornato a: **Fase 3** (Settings & AI Config, AI reale, Author Voice). Build V1 in corso, fase per fase.
 
-- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.9, US-17.1, US-17.2, US-18.1
-- **In corso (🔄):** US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.7, US-3.8, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3, US-23.4
+- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.9, US-17.1, US-17.2, US-18.1, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3
+- **In corso (🔄):** US-4.1, US-4.2, US-4.3, US-4.4, US-4.5
 
 ---
 

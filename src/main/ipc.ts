@@ -1,22 +1,45 @@
 import type { IpcMain } from 'electron'
 import type { AIRequest } from '@shared/ai'
-import type { NewProject, NoteScope, ProjectUpdate, SceneUpdate } from '@shared/domain'
+import type {
+  NewProject,
+  NewStyleProfile,
+  NoteScope,
+  ProjectUpdate,
+  SceneUpdate,
+  StyleProfileUpdate
+} from '@shared/domain'
+import type { AIProviderId, SettingsUpdate } from '@shared/settings'
 import { AIGateway } from './ai/gateway'
-import type { ManuscriptRepository, ProjectRepository } from './data/types'
+import type { ManuscriptRepository, ProjectRepository, StyleRepository } from './data/types'
+import type { SettingsRepository } from './data/settings-repository'
 
-interface Repos {
+interface Deps {
   projects: ProjectRepository
   manuscript: ManuscriptRepository
+  styles: StyleRepository
+  settings: SettingsRepository
 }
+
+type LiveProvider = Exclude<AIProviderId, 'mock'>
 
 // Canali IPC esposti al renderer tramite il preload (window.authoros).
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
-export function registerIpc(ipc: IpcMain, { projects, manuscript }: Repos): void {
-  const ai = new AIGateway()
+export function registerIpc(ipc: IpcMain, { projects, manuscript, styles, settings }: Deps): void {
+  const ai = new AIGateway(() => settings.resolveAi())
 
   ipc.handle('ai:status', () => ai.status())
   ipc.handle('ai:generate', (_e, req: AIRequest) => ai.generate(req))
+  ipc.handle('ai:deriveStyle', (_e, sample: string) => ai.deriveStyle(sample))
 
+  // Impostazioni & AI Config (Epic 22)
+  ipc.handle('settings:get', () => settings.get())
+  ipc.handle('settings:update', (_e, patch: SettingsUpdate) => settings.update(patch))
+  ipc.handle('settings:setKey', (_e, provider: LiveProvider, key: string) =>
+    settings.setKey(provider, key)
+  )
+  ipc.handle('settings:clearKey', (_e, provider: LiveProvider) => settings.clearKey(provider))
+
+  // Progetti (Epic 1)
   ipc.handle('projects:list', (_e, includeArchived?: boolean) => projects.list(includeArchived))
   ipc.handle('projects:get', (_e, id: string) => projects.get(id))
   ipc.handle('projects:create', (_e, input: NewProject) => projects.create(input))
@@ -68,4 +91,16 @@ export function registerIpc(ipc: IpcMain, { projects, manuscript }: Repos): void
   ipc.handle('ms:noteDelete', (_e, id: string) => manuscript.deleteNote(id))
 
   ipc.handle('ms:stats', (_e, projectId: string) => manuscript.getStats(projectId))
+
+  // Author Voice / Style Profile (Epic 23)
+  ipc.handle('style:list', (_e, projectId: string) => styles.list(projectId))
+  ipc.handle('style:active', (_e, projectId: string) => styles.getActive(projectId))
+  ipc.handle('style:create', (_e, projectId: string, input: NewStyleProfile) =>
+    styles.create(projectId, input)
+  )
+  ipc.handle('style:update', (_e, id: string, patch: StyleProfileUpdate) => styles.update(id, patch))
+  ipc.handle('style:setActive', (_e, projectId: string, id: string) =>
+    styles.setActive(projectId, id)
+  )
+  ipc.handle('style:remove', (_e, id: string) => styles.remove(id))
 }

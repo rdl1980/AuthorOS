@@ -67,3 +67,23 @@ export interface ProjectStats {
 
 /** Riferimento di una nota: a una scena o a un capitolo. */
 export type NoteScope = { sceneId: string } | { chapterId: string }
+
+// --- Author Voice / Style Profile (Epic 23) -------------------------------
+
+export interface StyleProfile {
+  id: string
+  projectId: string
+  name: string
+  /** Tono/registro sintetico (es. "ironico, asciutto, prima persona"). */
+  tone: string
+  /** Istruzioni/esempi per guidare l'AI a scrivere nella voce dell'autore. */
+  instructions: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type NewStyleProfile = Pick<StyleProfile, 'name'> &
+  Partial<Pick<StyleProfile, 'tone' | 'instructions'>>
+
+export type StyleProfileUpdate = Partial<Pick<StyleProfile, 'name' | 'tone' | 'instructions'>>

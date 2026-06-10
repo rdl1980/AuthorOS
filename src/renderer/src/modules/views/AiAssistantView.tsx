@@ -1,7 +1,9 @@
-import { useState } from 'react'
-import type { AIOperation, AIResult } from '@shared/ai'
+import { useEffect, useState } from 'react'
+import type { AIOperation, AIResult, AIStatus } from '@shared/ai'
+import type { StyleProfile } from '@shared/domain'
 import { AiInteractionShell } from '../../components/AiInteractionShell'
 import { useUsageMeter } from '../../store/useUsageMeter'
+import { useLibrary } from '../../store/useLibrary'
 
 const OPERATIONS: { value: AIOperation; label: string }[] = [
   { value: 'scene', label: 'Genera scena' },
@@ -13,30 +15,48 @@ const OPERATIONS: { value: AIOperation; label: string }[] = [
 ]
 
 /**
- * Modulo AI Assistant (Epic 3) — dimostra il flusso completo end-to-end:
- * prompt → AI Gateway (mock) via IPC → AI Interaction Shell (accept/edit/reject) → usage meter.
+ * Modulo AI Assistant (Epic 3) — flusso end-to-end: prompt → AI Gateway (mock o reale)
+ * via IPC, con la voce dell'autore (profilo attivo) → AI Interaction Shell → usage meter.
  */
 export function AiAssistantView(): JSX.Element {
+  const project = useLibrary((s) => s.active)
+  const track = useUsageMeter((s) => s.track)
+
   const [operation, setOperation] = useState<AIOperation>('scene')
   const [prompt, setPrompt] = useState('')
-  const [styleProfile, setStyleProfile] = useState('')
+  const [activeStyle, setActiveStyle] = useState<StyleProfile | null>(null)
+  const [status, setStatus] = useState<AIStatus | null>(null)
   const [result, setResult] = useState<AIResult | null>(null)
   const [accepted, setAccepted] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const track = useUsageMeter((s) => s.track)
+
+  useEffect(() => {
+    void window.authoros.ai.status().then(setStatus)
+  }, [])
+
+  useEffect(() => {
+    if (project) void window.authoros.style.active(project.id).then(setActiveStyle)
+    else setActiveStyle(null)
+  }, [project?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const generate = async (): Promise<void> => {
     if (!prompt.trim()) return
     setBusy(true)
     setAccepted(null)
     try {
-      const res = await window.authoros.ai.generate({
-        operation,
-        prompt,
-        styleProfile: styleProfile.trim() || undefined
-      })
+      const styleProfile = activeStyle
+        ? `${activeStyle.tone}\n${activeStyle.instructions}`.trim()
+        : undefined
+      const res = await window.authoros.ai.generate({ operation, prompt, styleProfile })
       setResult(res)
       track(res.usage)
+    } catch (e) {
+      setResult({
+        text: `Errore durante la generazione: ${e instanceof Error ? e.message : String(e)}`,
+        provider: status?.provider ?? '—',
+        model: status?.model ?? '—',
+        usage: { promptTokens: 0, completionTokens: 0, credits: 0 }
+      })
     } finally {
       setBusy(false)
     }
@@ -46,10 +66,24 @@ export function AiAssistantView(): JSX.Element {
     <div className="max-w-3xl">
       <h2 className="text-2xl font-semibold">AI Assistant</h2>
       <p className="mt-1 text-muted">
-        L'AI propone, tu decidi. Ogni output passa dal controllo manuale e non sovrascrive mai il testo.
+        L'AI propone, tu decidi. Ogni output passa dal controllo manuale e non sovrascrive mai il
+        testo.
       </p>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+        {status && (
+          <span className={`rounded-full px-2 py-0.5 ${status.mode === 'live' ? 'bg-green/15 text-green' : 'bg-yellow/15 text-yellow'}`}>
+            {status.mode === 'live' ? 'AI reale' : 'mock'} · {status.provider} · {status.model}
+          </span>
+        )}
+        {activeStyle && (
+          <span className="rounded-full bg-violet/15 px-2 py-0.5 text-violet">
+            voce: {activeStyle.name}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-4">
         <select
           className="rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm outline-none focus:border-cyan"
           value={operation}
@@ -61,12 +95,6 @@ export function AiAssistantView(): JSX.Element {
             </option>
           ))}
         </select>
-        <input
-          className="min-w-[200px] flex-1 rounded-lg border border-line bg-bg/60 px-3 py-2 text-sm outline-none focus:border-cyan"
-          placeholder="Profilo di stile (Author Voice, opz.)"
-          value={styleProfile}
-          onChange={(e) => setStyleProfile(e.target.value)}
-        />
       </div>
 
       <textarea
