@@ -9,6 +9,8 @@ import { SqliteStructureRepository } from './data/structure-repository'
 import { SqliteCharacterRepository } from './data/character-repository'
 import { SqliteTimelineRepository } from './data/timeline-repository'
 import { SettingsRepository } from './data/settings-repository'
+import { SearchService } from './data/search-service'
+import { SnapshotService } from './data/snapshot-service'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -44,6 +46,8 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   const dataDir = join(app.getPath('userData'), 'authoros-data')
   const db = await initDatabase(dataDir)
+  const settings = new SettingsRepository(dataDir)
+  const snapshots = new SnapshotService(db, dataDir)
   registerIpc(ipcMain, {
     projects: new SqliteProjectRepository(db),
     manuscript: new SqliteManuscriptRepository(db),
@@ -51,8 +55,17 @@ app.whenReady().then(async () => {
     structure: new SqliteStructureRepository(db),
     characters: new SqliteCharacterRepository(db),
     timeline: new SqliteTimelineRepository(db),
-    settings: new SettingsRepository(dataDir)
+    settings,
+    searchService: new SearchService(db),
+    snapshots
   })
+
+  // Auto-snapshot del progetto attivo ogni 15 minuti, solo se cambiato (US-24.3).
+  setInterval(() => {
+    const pid = settings.get().lastProjectId
+    if (pid) snapshots.autoSnapshot(pid)
+  }, 15 * 60 * 1000)
+
   createWindow()
 
   app.on('activate', () => {

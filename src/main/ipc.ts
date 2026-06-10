@@ -24,6 +24,8 @@ import type {
   TimelineRepository
 } from './data/types'
 import type { SettingsRepository } from './data/settings-repository'
+import type { SearchService } from './data/search-service'
+import type { SnapshotService } from './data/snapshot-service'
 import { PublishingService } from './export/publishing'
 
 interface Deps {
@@ -34,6 +36,8 @@ interface Deps {
   characters: CharacterRepository
   timeline: TimelineRepository
   settings: SettingsRepository
+  searchService: SearchService
+  snapshots: SnapshotService
 }
 
 type LiveProvider = Exclude<AIProviderId, 'mock'>
@@ -42,7 +46,7 @@ type LiveProvider = Exclude<AIProviderId, 'mock'>
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
 export function registerIpc(
   ipc: IpcMain,
-  { projects, manuscript, styles, structure, characters, timeline, settings }: Deps
+  { projects, manuscript, styles, structure, characters, timeline, settings, searchService, snapshots }: Deps
 ): void {
   const ai = new AIGateway(() => settings.resolveAi())
   const publishing = new PublishingService(projects, manuscript, structure)
@@ -156,6 +160,21 @@ export function registerIpc(
     characters.addArcStep(arcId, chapterId, description)
   )
   ipc.handle('char:arcStepRemove', (_e, id: string) => characters.removeArcStep(id))
+
+  // Ricerca & Snapshot (Epic 24)
+  ipc.handle('search:query', (_e, projectId: string, q: string) =>
+    searchService.search(projectId, q)
+  )
+  ipc.handle('snap:list', (_e, projectId: string) => snapshots.list(projectId))
+  ipc.handle('snap:create', (_e, projectId: string, label: string) =>
+    snapshots.create(projectId, label)
+  )
+  ipc.handle('snap:restore', (_e, projectId: string, file: string) =>
+    snapshots.restore(projectId, file)
+  )
+  ipc.handle('snap:remove', (_e, projectId: string, file: string) =>
+    snapshots.remove(projectId, file)
+  )
 
   // Timeline Engine (Epic 9)
   ipc.handle('tl:events', (_e, projectId: string) => timeline.listEvents(projectId))

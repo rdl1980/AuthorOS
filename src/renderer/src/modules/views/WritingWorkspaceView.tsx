@@ -21,6 +21,7 @@ export function WritingWorkspaceView(): JSX.Element {
 
   const ms = window.authoros.manuscript
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastProjectRef = useRef<string | null | undefined>(undefined)
 
   const reloadTree = useCallback(async () => {
     if (!project) return
@@ -34,10 +35,15 @@ export function WritingWorkspaceView(): JSX.Element {
     setStats(st)
   }, [project, ms])
 
-  // Carica all'apertura/cambio progetto.
+  // Carica all'apertura/cambio progetto. La selezione si azzera solo se il
+  // progetto è cambiato davvero (non al mount: la ricerca può pre-selezionare).
   useEffect(() => {
-    select(null)
-    setNotes([])
+    const pid = project?.id ?? null
+    if (lastProjectRef.current !== undefined && lastProjectRef.current !== pid) {
+      select(null)
+      setNotes([])
+    }
+    lastProjectRef.current = pid
     void reloadTree()
   }, [project?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

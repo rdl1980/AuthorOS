@@ -30,6 +30,7 @@ import type {
 } from '@shared/domain'
 import type { AIProviderId, AppSettings, SettingsUpdate } from '@shared/settings'
 import type { ExportResult, ImportResult } from '@shared/publishing'
+import type { SearchResult, SnapshotMeta } from '@shared/search'
 
 // API tipata esposta al renderer. Nessun accesso diretto a Node/Electron dal renderer:
 // tutto passa da questi canali (context isolation).
@@ -128,6 +129,19 @@ const api = {
     arcStepAdd: (arcId: string, chapterId: string, description: string): Promise<ArcStep> =>
       ipcRenderer.invoke('char:arcStepAdd', arcId, chapterId, description),
     arcStepRemove: (id: string): Promise<boolean> => ipcRenderer.invoke('char:arcStepRemove', id)
+  },
+  search: {
+    query: (projectId: string, q: string): Promise<SearchResult[]> =>
+      ipcRenderer.invoke('search:query', projectId, q)
+  },
+  snapshots: {
+    list: (projectId: string): Promise<SnapshotMeta[]> => ipcRenderer.invoke('snap:list', projectId),
+    create: (projectId: string, label: string): Promise<SnapshotMeta | null> =>
+      ipcRenderer.invoke('snap:create', projectId, label),
+    restore: (projectId: string, file: string): Promise<boolean> =>
+      ipcRenderer.invoke('snap:restore', projectId, file),
+    remove: (projectId: string, file: string): Promise<boolean> =>
+      ipcRenderer.invoke('snap:remove', projectId, file)
   },
   publishing: {
     exportDocx: (projectId: string): Promise<ExportResult> =>

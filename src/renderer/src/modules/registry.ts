@@ -8,6 +8,7 @@ import { CharactersView } from './views/CharactersView'
 import { TimelineView } from './views/TimelineView'
 import { AiEditorView } from './views/AiEditorView'
 import { PublishingView } from './views/PublishingView'
+import { SearchSnapshotsView } from './views/SearchSnapshotsView'
 import { SettingsView } from './views/SettingsView'
 
 /**
@@ -97,6 +98,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: PublishingView
+  },
+  {
+    id: 'archive',
+    epic: 24,
+    title: 'Cerca & Snapshot',
+    icon: '🔎',
+    release: 'V1',
+    status: 'ready',
+    component: SearchSnapshotsView
   },
   {
     id: 'settings',
