@@ -7,8 +7,8 @@ import { StructureView } from './views/StructureView'
 import { CharactersView } from './views/CharactersView'
 import { TimelineView } from './views/TimelineView'
 import { AiEditorView } from './views/AiEditorView'
+import { PublishingView } from './views/PublishingView'
 import { SettingsView } from './views/SettingsView'
-import { makePlaceholder } from './views/PlaceholderView'
 
 /**
  * Registry dei moduli. Fase 0 registra i moduli must-have della V1: due funzionanti
@@ -95,8 +95,8 @@ export const modules: AppModule[] = [
     title: 'Publishing',
     icon: '📦',
     release: 'V1',
-    status: 'planned',
-    component: makePlaceholder('Publishing Assistant', 'Import DOCX/Markdown ed export DOCX/PDF/EPUB.')
+    status: 'ready',
+    component: PublishingView
   },
   {
     id: 'settings',

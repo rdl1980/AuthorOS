@@ -29,6 +29,7 @@ import type {
   StyleProfileUpdate
 } from '@shared/domain'
 import type { AIProviderId, AppSettings, SettingsUpdate } from '@shared/settings'
+import type { ExportResult, ImportResult } from '@shared/publishing'
 
 // API tipata esposta al renderer. Nessun accesso diretto a Node/Electron dal renderer:
 // tutto passa da questi canali (context isolation).
@@ -127,6 +128,16 @@ const api = {
     arcStepAdd: (arcId: string, chapterId: string, description: string): Promise<ArcStep> =>
       ipcRenderer.invoke('char:arcStepAdd', arcId, chapterId, description),
     arcStepRemove: (id: string): Promise<boolean> => ipcRenderer.invoke('char:arcStepRemove', id)
+  },
+  publishing: {
+    exportDocx: (projectId: string): Promise<ExportResult> =>
+      ipcRenderer.invoke('pub:exportDocx', projectId),
+    exportPdf: (projectId: string): Promise<ExportResult> =>
+      ipcRenderer.invoke('pub:exportPdf', projectId),
+    exportEpub: (projectId: string): Promise<ExportResult> =>
+      ipcRenderer.invoke('pub:exportEpub', projectId),
+    importFile: (projectId: string): Promise<ImportResult> =>
+      ipcRenderer.invoke('pub:import', projectId)
   },
   timeline: {
     events: (projectId: string): Promise<TimelineEvent[]> =>

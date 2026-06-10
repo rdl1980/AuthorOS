@@ -24,6 +24,7 @@ import type {
   TimelineRepository
 } from './data/types'
 import type { SettingsRepository } from './data/settings-repository'
+import { PublishingService } from './export/publishing'
 
 interface Deps {
   projects: ProjectRepository
@@ -44,6 +45,13 @@ export function registerIpc(
   { projects, manuscript, styles, structure, characters, timeline, settings }: Deps
 ): void {
   const ai = new AIGateway(() => settings.resolveAi())
+  const publishing = new PublishingService(projects, manuscript)
+
+  // Publishing: export/import (Epic 16 + 21)
+  ipc.handle('pub:exportDocx', (_e, projectId: string) => publishing.exportDocx(projectId))
+  ipc.handle('pub:exportPdf', (_e, projectId: string) => publishing.exportPdf(projectId))
+  ipc.handle('pub:exportEpub', (_e, projectId: string) => publishing.exportEpub(projectId))
+  ipc.handle('pub:import', (_e, projectId: string) => publishing.importFile(projectId))
 
   ipc.handle('ai:status', () => ai.status())
   ipc.handle('ai:generate', (_e, req: AIRequest) => ai.generate(req))
