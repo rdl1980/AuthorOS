@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import JSZip from 'jszip'
-import { htmlToMarkdown, parseManuscript } from '../src/shared/import'
+import { autowireToBeats, htmlToMarkdown, parseManuscript } from '../src/shared/import'
+import { makeDb } from './helpers'
+import { SqliteProjectRepository } from '../src/main/data/sqlite-repository'
+import { SqliteManuscriptRepository } from '../src/main/data/manuscript-repository'
+import { SqliteStructureRepository } from '../src/main/data/structure-repository'
 import {
   markdownToPlainParagraphs,
   modelToHtml,
@@ -63,6 +67,55 @@ describe('htmlToMarkdown (US-21.1)', () => {
     expect(md).toContain('**forte**')
     expect(md).toContain('*corsivo*')
     expect(md).toContain('Secondo paragrafo.')
+  })
+})
+
+describe('autowireToBeats (US-21.5)', () => {
+  it('mappa per posizione: prima scena → primo beat, ultima → ultimo', () => {
+    const scenes = ['s1', 's2', 's3', 's4', 's5', 's6']
+    const beats = ['b1', 'b2', 'b3']
+    const pairs = autowireToBeats(scenes, beats)
+    expect(pairs[0]).toEqual({ scene: 's1', beat: 'b1' })
+    expect(pairs[5]).toEqual({ scene: 's6', beat: 'b3' })
+    // distribuzione uniforme: 2 scene per beat
+    expect(pairs.filter((p) => p.beat === 'b2').map((p) => p.scene)).toEqual(['s3', 's4'])
+  })
+
+  it('con meno scene che beat, alcuni beat restano scoperti (corretto)', () => {
+    const pairs = autowireToBeats(['s1', 's2'], ['b1', 'b2', 'b3', 'b4'])
+    expect(pairs).toEqual([
+      { scene: 's1', beat: 'b1' },
+      { scene: 's2', beat: 'b3' }
+    ])
+  })
+
+  it('gestisce liste vuote', () => {
+    expect(autowireToBeats([], ['b1'])).toEqual([])
+    expect(autowireToBeats(['s1'], [])).toEqual([])
+  })
+
+  it('integrazione: scene importate collegate ai beat del framework', async () => {
+    const db = await makeDb()
+    const pid = new SqliteProjectRepository(db).create({ title: 'Libro' }).id
+    const ms = new SqliteManuscriptRepository(db)
+    const st = new SqliteStructureRepository(db)
+    const beats = st.setFramework(pid, 'Three Act Structure') // 8 beat
+
+    // simula l'import: 4 scene in ordine, poi lo stesso wiring del PublishingService
+    const ch = ms.createChapter(pid, 'Cap 1')
+    const ids = ['A', 'B', 'C', 'D'].map((t) => ms.createScene(pid, ch.id, t).id)
+    const covered = new Set<string>()
+    for (const { scene, beat } of autowireToBeats(ids, beats.map((b) => b.id))) {
+      st.linkScene(beat, scene)
+      covered.add(beat)
+    }
+
+    const links = st.links(pid)
+    expect(links).toHaveLength(4)
+    expect(covered.size).toBe(4)
+    // prima scena → primo beat (Setup), ultima → beat in coda
+    expect(links.find((l) => l.sceneId === ids[0])?.beatId).toBe(beats[0].id)
+    expect(links.find((l) => l.sceneId === ids[3])?.beatId).toBe(beats[6].id)
   })
 })
 

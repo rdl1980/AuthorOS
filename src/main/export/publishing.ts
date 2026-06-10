@@ -3,9 +3,9 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { basename, extname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import mammoth from 'mammoth'
-import { htmlToMarkdown, parseManuscript } from '@shared/import'
+import { autowireToBeats, htmlToMarkdown, parseManuscript } from '@shared/import'
 import type { ExportResult, ImportResult } from '@shared/publishing'
-import type { ManuscriptRepository, ProjectRepository } from '../data/types'
+import type { ManuscriptRepository, ProjectRepository, StructureRepository } from '../data/types'
 import { assembleModel, modelToHtml, type ManuscriptModel } from './builder'
 import { buildDocx } from './docx'
 import { buildEpub } from './epub'
@@ -16,7 +16,8 @@ const sanitize = (s: string): string => s.replace(/[<>:"/\\|?*]+/g, '').trim() |
 export class PublishingService {
   constructor(
     private readonly projects: ProjectRepository,
-    private readonly manuscript: ManuscriptRepository
+    private readonly manuscript: ManuscriptRepository,
+    private readonly structure: StructureRepository
   ) {}
 
   private model(projectId: string): ManuscriptModel | null {
@@ -114,6 +115,7 @@ export class PublishingService {
 
       let scenes = 0
       let words = 0
+      const createdSceneIds: string[] = []
       for (const ch of parsed) {
         const title =
           parsed.length === 1 && ch.title === 'Capitolo 1'
@@ -123,11 +125,26 @@ export class PublishingService {
         for (const sc of ch.scenes) {
           const scene = this.manuscript.createScene(projectId, chapter.id, sc.title)
           const updated = this.manuscript.updateScene(scene.id, { content: sc.content })
+          createdSceneIds.push(scene.id)
           scenes += 1
           words += updated?.wordCount ?? 0
         }
       }
-      return { ok: true, chapters: parsed.length, scenes, words }
+
+      // Autowire import→struttura (US-21.5): se il progetto ha un framework con
+      // beat, le scene importate vengono associate per posizione narrativa.
+      let beatsLinked: number | undefined
+      const beats = this.structure.listBeats(projectId)
+      if (beats.length > 0 && createdSceneIds.length > 0) {
+        const covered = new Set<string>()
+        for (const { scene, beat } of autowireToBeats(createdSceneIds, beats.map((b) => b.id))) {
+          this.structure.linkScene(beat, scene)
+          covered.add(beat)
+        }
+        beatsLinked = covered.size
+      }
+
+      return { ok: true, chapters: parsed.length, scenes, words, beatsLinked }
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) }
     }

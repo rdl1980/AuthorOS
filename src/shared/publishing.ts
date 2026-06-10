@@ -12,5 +12,7 @@ export interface ImportResult {
   chapters?: number
   scenes?: number
   words?: number
+  /** Beat coperti dall'autowire import→struttura (US-21.5); assente se nessun framework. */
+  beatsLinked?: number
   error?: string
 }

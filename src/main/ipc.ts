@@ -45,7 +45,7 @@ export function registerIpc(
   { projects, manuscript, styles, structure, characters, timeline, settings }: Deps
 ): void {
   const ai = new AIGateway(() => settings.resolveAi())
-  const publishing = new PublishingService(projects, manuscript)
+  const publishing = new PublishingService(projects, manuscript, structure)
 
   // Publishing: export/import (Epic 16 + 21)
   ipc.handle('pub:exportDocx', (_e, projectId: string) => publishing.exportDocx(projectId))

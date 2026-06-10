@@ -50,8 +50,8 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 > Legenda: ✅ completata · 🔄 in corso · ⬜ da fare. Nel backlog visuale le voci ✅ sono **barrate**.
 > Aggiornato a: **Fase 8** (Import/Export). 🏁 **MVP V1 must-have COMPLETO**: tutti i moduli della sidebar sono attivi.
 
-- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3
-- **In corso (🔄):** US-21.5 (autowire import→struttura). Prossimo: Should-have V1 — Epic 24 Search & Snapshots, Epic 25 Onboarding, Epic 7 World Building, Epic 8 Plot Intelligence, Epic 14 Marketing base.
+- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-21.5, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3
+- **In corso (🔄):** — Prossimo: Should-have V1 — Epic 24 Search & Snapshots, Epic 25 Onboarding, Epic 7 World Building, Epic 8 Plot Intelligence, Epic 14 Marketing base.
 
 ---
 

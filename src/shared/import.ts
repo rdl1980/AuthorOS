@@ -81,6 +81,19 @@ export function parseManuscript(text: string): ParsedChapter[] {
 }
 
 /**
+ * Autowire import→struttura (US-21.5): mappa le scene importate sui beat del
+ * framework selezionato in proporzione alla posizione narrativa. La prima scena
+ * cade sul primo beat, l'ultima sull'ultimo, le altre distribuite linearmente.
+ */
+export function autowireToBeats<S, B>(scenes: S[], beats: B[]): { scene: S; beat: B }[] {
+  if (scenes.length === 0 || beats.length === 0) return []
+  return scenes.map((scene, i) => ({
+    scene,
+    beat: beats[Math.min(beats.length - 1, Math.floor((i / scenes.length) * beats.length))]
+  }))
+}
+
+/**
  * Conversione HTML→Markdown minimale per l'output di mammoth (US-21.1):
  * gestisce h1-h3, p, br, strong/b, em/i, li. Sufficiente per testi narrativi.
  */

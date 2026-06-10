@@ -57,9 +57,13 @@ export function PublishingView(): JSX.Element {
     try {
       const res = await window.authoros.publishing.importFile(project.id)
       if (res.ok) {
+        const beats =
+          res.beatsLinked !== undefined
+            ? ` Scene associate automaticamente alla struttura: ${res.beatsLinked} beat coperti.`
+            : ''
         setMessage({
           ok: true,
-          text: `Importati ${res.chapters} capitoli, ${res.scenes} scene (${res.words?.toLocaleString('it-IT')} parole). Li trovi nel Workspace.`
+          text: `Importati ${res.chapters} capitoli, ${res.scenes} scene (${res.words?.toLocaleString('it-IT')} parole). Li trovi nel Workspace.${beats}`
         })
         await reloadStats()
       } else if (res.error !== 'annullato') {
@@ -129,7 +133,9 @@ export function PublishingView(): JSX.Element {
           <p className="text-sm text-muted">
             Porta in AuthorOS un manoscritto esistente: <strong>DOCX</strong>, <strong>Markdown</strong> o{' '}
             <strong>TXT</strong>. Capitoli (<code>#</code> o Titolo 1) e scene (<code>##</code>,{' '}
-            <code>***</code>) vengono riconosciuti automaticamente e aggiunti al progetto.
+            <code>***</code>) vengono riconosciuti automaticamente e aggiunti al progetto. Se hai già
+            scelto un framework narrativo, le scene vengono anche <strong>associate ai beat</strong> in
+            base alla posizione nel manoscritto (puoi ritoccare tutto nella vista Struttura).
           </p>
           <button
             className="mt-3 rounded-lg bg-cyan px-4 py-2 text-sm font-semibold text-bg hover:opacity-90 disabled:opacity-50"
