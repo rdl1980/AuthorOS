@@ -43,6 +43,25 @@ const inline = (raw) => {
   return s;
 };
 
+/* ----------------------------- stato (status) ----------------------------- */
+
+const STATUS_ICON = { done: '✅', wip: '🔄', todo: '⬜' };
+
+// Legge la sezione "Stato Implementazione": ID nelle righe "Completate" -> done,
+// nelle righe "In corso" -> wip. Tutto il resto resta "todo" (default).
+function parseStatus(text) {
+  const us = new Map();
+  for (const line of text.split(/\r?\n/)) {
+    const ids = [...line.matchAll(/US-[\d.]+/g)].map((m) => m[0]);
+    if (!ids.length) continue;
+    if (/Completate/i.test(line)) ids.forEach((id) => us.set(id, 'done'));
+    else if (/In corso/i.test(line)) ids.forEach((id) => us.set(id, 'wip'));
+  }
+  return us;
+}
+
+const STATUS = parseStatus(md);
+
 /* ----------------------- markdown -> HTML (subset) ------------------------ */
 
 function renderMarkdown(text) {
@@ -95,7 +114,13 @@ function renderMarkdown(text) {
     if (h) {
       flushPara();
       const lvl = h[1].length;
-      out.push(`<h${lvl}>${inline(h[2])}</h${lvl}>`);
+      const em = h[2].match(/^EPIC\s+(\d+)/);
+      const st = em ? EPIC_STATUS.get(em[1]) : null;
+      const titleHtml = st && st.state === 'done' ? `<del>${inline(h[2])}</del>` : inline(h[2]);
+      const badge = st
+        ? ` <span class="badge ${st.state}">${STATUS_ICON[st.state]} ${st.done}/${st.total}</span>`
+        : '';
+      out.push(`<h${lvl}>${titleHtml}${badge}</h${lvl}>`);
       i++;
       continue;
     }
@@ -124,7 +149,15 @@ function renderMarkdown(text) {
       }
       const thead = `<thead><tr>${header.map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead>`;
       const tbody = `<tbody>${rows
-        .map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`)
+        .map((r) => {
+          const m = (r[0] || '').match(/^(US-[\d.]+)/);
+          const st = m ? STATUS.get(m[1]) || 'todo' : null;
+          const cls = st ? ` class="row-${st}"` : '';
+          const icon = st ? `${STATUS_ICON[st]} ` : '';
+          return `<tr${cls}>${r
+            .map((c, ci) => `<td>${ci === 0 && st ? icon : ''}${inline(c)}</td>`)
+            .join('')}</tr>`;
+        })
         .join('')}</tbody>`;
       out.push(`<div class="table-wrap"><table>${thead}${tbody}</table></div>`);
       continue;
@@ -199,28 +232,50 @@ function parseEpics(text) {
     const rels = [...releases].sort();
     const relLabel = rels.length ? (rels.length === 1 ? rels[0] : `${rels[0]}/${rels[rels.length - 1]}`) : '—';
 
-    epics.push({ num, name, objective, count: stories.length, topPrio, relLabel });
+    epics.push({
+      num,
+      name,
+      objective,
+      count: stories.length,
+      topPrio,
+      relLabel,
+      storyIds: stories.map((s) => s.id)
+    });
   }
   return epics;
 }
 
 const epics = parseEpics(md);
 
+// Stato per epica: aggregato dallo stato delle sue US.
+const EPIC_STATUS = new Map();
+for (const e of epics) {
+  const total = e.storyIds.length;
+  const done = e.storyIds.filter((id) => STATUS.get(id) === 'done').length;
+  const wip = e.storyIds.filter((id) => STATUS.get(id) === 'wip').length;
+  const state = total > 0 && done === total ? 'done' : done > 0 || wip > 0 ? 'wip' : 'todo';
+  EPIC_STATUS.set(e.num, { done, total, wip, state });
+}
+
 const epicCards = epics
-  .map(
-    (e) => `      <article class="card ${PRIO_CLASS[e.topPrio]}">
+  .map((e) => {
+    const st = EPIC_STATUS.get(e.num);
+    const name = st.state === 'done' ? `<del>${inline(e.name)}</del>` : inline(e.name);
+    return `      <article class="card ${PRIO_CLASS[e.topPrio]} epic-${st.state}">
         <div class="card-top"><span>EPIC ${e.num}</span><span class="pill">${e.relLabel}</span></div>
-        <h3>${inline(e.name)}</h3>
+        <h3>${name}</h3>
         <p>${inline(e.objective)}</p>
-        <div class="card-foot"><strong>${PRIO_LABEL[e.topPrio]}</strong><span class="count">${e.count} US</span></div>
-      </article>`
-  )
+        <div class="card-foot"><strong>${PRIO_LABEL[e.topPrio]}</strong><span class="status-chip ${st.state}">${STATUS_ICON[st.state]} ${st.done}/${st.total}</span></div>
+      </article>`;
+  })
   .join('\n');
 
 const stats = {
   epics: epics.length,
   stories: epics.reduce((a, e) => a + e.count, 0),
   must: epics.filter((e) => e.topPrio === 3).length,
+  done: [...STATUS.values()].filter((v) => v === 'done').length,
+  wip: [...STATUS.values()].filter((v) => v === 'wip').length
 };
 
 /* ------------------------------- HTML out -------------------------------- */
@@ -292,6 +347,22 @@ const html = `<!DOCTYPE html>
     th { background: var(--panel2); white-space: nowrap; }
     td { color: var(--muted); }
     .full { background: rgba(255,255,255,.02); border: 1px solid var(--line); border-radius: 22px; padding: 8px 30px 30px; }
+    /* stato implementazione */
+    .badge { font-size: 13px; font-weight: 700; vertical-align: middle; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
+    .badge.done { color: var(--green); background: rgba(94,240,161,.10); }
+    .badge.wip { color: var(--yellow); background: rgba(255,209,102,.10); }
+    .badge.todo { color: var(--muted); }
+    tr.row-done td { color: var(--muted); text-decoration: line-through; opacity: .72; }
+    tr.row-done td:first-child, tr.row-wip td:first-child, tr.row-todo td:first-child { text-decoration: none; white-space: nowrap; }
+    tr.row-wip td:first-child { color: var(--yellow); }
+    .status-chip { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .status-chip.done { color: var(--green); background: rgba(94,240,161,.12); }
+    .status-chip.wip { color: var(--yellow); background: rgba(255,209,102,.12); }
+    .status-chip.todo { color: var(--muted); background: rgba(255,255,255,.05); }
+    .card.epic-done { border-color: rgba(94,240,161,.45); }
+    .card.epic-wip { border-color: rgba(255,209,102,.40); }
+    .stat b.done { color: var(--green); }
+    .stat b.wip { color: var(--yellow); }
     footer { padding: 32px 8vw; color: var(--muted); border-top: 1px solid var(--line); }
   </style>
 </head>
@@ -304,6 +375,8 @@ const html = `<!DOCTYPE html>
     <div class="stats">
       <div class="stat"><b>${stats.epics}</b><span>Epiche</span></div>
       <div class="stat"><b>${stats.stories}</b><span>User Story</span></div>
+      <div class="stat"><b class="done">${stats.done}</b><span>✅ Completate</span></div>
+      <div class="stat"><b class="wip">${stats.wip}</b><span>🔄 In corso</span></div>
       <div class="stat"><b>${stats.must}</b><span>Epiche con Must</span></div>
     </div>
   </header>
