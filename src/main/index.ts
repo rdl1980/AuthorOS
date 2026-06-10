@@ -8,6 +8,7 @@ import { SqliteStyleRepository } from './data/style-repository'
 import { SqliteStructureRepository } from './data/structure-repository'
 import { SqliteCharacterRepository } from './data/character-repository'
 import { SqliteTimelineRepository } from './data/timeline-repository'
+import { SqliteWorldRepository } from './data/world-repository'
 import { SettingsRepository } from './data/settings-repository'
 import { SearchService } from './data/search-service'
 import { SnapshotService } from './data/snapshot-service'
@@ -55,6 +56,7 @@ app.whenReady().then(async () => {
     structure: new SqliteStructureRepository(db),
     characters: new SqliteCharacterRepository(db),
     timeline: new SqliteTimelineRepository(db),
+    world: new SqliteWorldRepository(db),
     settings,
     searchService: new SearchService(db),
     snapshots

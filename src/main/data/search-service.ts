@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import type { SearchResult } from '@shared/search'
 import type { DB } from './db'
-import { chapters, characters, notes, scenes, timelineEvents } from './schema'
+import { chapters, characters, notes, scenes, timelineEvents, worldElements } from './schema'
 
 /** Estratto di ~90 caratteri attorno alla prima corrispondenza. */
 function snippet(text: string, query: string): string {
@@ -62,6 +62,16 @@ export class SearchService {
       if (matches(ev.title, ev.description, ev.location)) {
         const source = ev.title.toLowerCase().includes(q) ? ev.title : ev.description
         results.push({ kind: 'event', id: ev.id, title: ev.title, snippet: snippet(source, q) })
+      }
+    }
+    for (const w of orm
+      .select()
+      .from(worldElements)
+      .where(eq(worldElements.projectId, projectId))
+      .all()) {
+      if (matches(w.name, w.description, w.details)) {
+        const source = w.name.toLowerCase().includes(q) ? w.name : `${w.description} ${w.details}`
+        results.push({ kind: 'world', id: w.id, title: w.name, snippet: snippet(source, q) })
       }
     }
     return results

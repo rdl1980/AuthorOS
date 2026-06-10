@@ -13,9 +13,13 @@ import type {
   NewCharacter,
   NewTimelineEvent,
   Relationship,
+  NewWorldElement,
   TimelineEvent,
   TimelineEventUpdate,
   TimelineIssue,
+  WorldElement,
+  WorldElementUpdate,
+  WorldKind,
   NewProject,
   NewStyleProfile,
   Note,
@@ -152,6 +156,15 @@ const api = {
       ipcRenderer.invoke('pub:exportEpub', projectId),
     importFile: (projectId: string): Promise<ImportResult> =>
       ipcRenderer.invoke('pub:import', projectId)
+  },
+  world: {
+    list: (projectId: string, kind?: WorldKind): Promise<WorldElement[]> =>
+      ipcRenderer.invoke('world:list', projectId, kind),
+    create: (projectId: string, input: NewWorldElement): Promise<WorldElement> =>
+      ipcRenderer.invoke('world:create', projectId, input),
+    update: (id: string, patch: WorldElementUpdate): Promise<WorldElement | null> =>
+      ipcRenderer.invoke('world:update', id, patch),
+    remove: (id: string): Promise<boolean> => ipcRenderer.invoke('world:remove', id)
   },
   timeline: {
     events: (projectId: string): Promise<TimelineEvent[]> =>

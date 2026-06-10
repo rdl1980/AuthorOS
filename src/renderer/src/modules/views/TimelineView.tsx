@@ -3,7 +3,8 @@ import type {
   Character,
   EventCharacterLink,
   TimelineEvent,
-  TimelineIssue
+  TimelineIssue,
+  WorldElement
 } from '@shared/domain'
 import { useLibrary } from '../../store/useLibrary'
 
@@ -17,6 +18,7 @@ export function TimelineView(): JSX.Element {
   const [links, setLinks] = useState<EventCharacterLink[]>([])
   const [issues, setIssues] = useState<TimelineIssue[]>([])
   const [cast, setCast] = useState<Character[]>([])
+  const [places, setPlaces] = useState<WorldElement[]>([])
   const [filterChar, setFilterChar] = useState('')
 
   // form nuovo evento
@@ -27,16 +29,18 @@ export function TimelineView(): JSX.Element {
 
   const reload = async (): Promise<void> => {
     if (!project) return
-    const [evs, ls, is, cs] = await Promise.all([
+    const [evs, ls, is, cs, pls] = await Promise.all([
       window.authoros.timeline.events(project.id),
       window.authoros.timeline.links(project.id),
       window.authoros.timeline.issues(project.id),
-      window.authoros.characters.list(project.id)
+      window.authoros.characters.list(project.id),
+      window.authoros.world.list(project.id, 'place')
     ])
     setEvents(evs)
     setLinks(ls)
     setIssues(is)
     setCast(cs)
+    setPlaces(pls)
   }
 
   useEffect(() => {
@@ -179,7 +183,13 @@ export function TimelineView(): JSX.Element {
           placeholder="Luogo (opz.)"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
+          list="world-places"
         />
+        <datalist id="world-places">
+          {places.map((p) => (
+            <option key={p.id} value={p.name} />
+          ))}
+        </datalist>
         <button
           className="rounded-lg bg-cyan px-4 py-2 text-sm font-semibold text-bg hover:opacity-90 disabled:opacity-50 lg:col-span-5"
           onClick={create}

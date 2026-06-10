@@ -11,9 +11,13 @@ import type {
   NewCharacter,
   NewTimelineEvent,
   Relationship,
+  NewWorldElement,
   TimelineEvent,
   TimelineEventUpdate,
   TimelineIssue,
+  WorldElement,
+  WorldElementUpdate,
+  WorldKind,
   NewProject,
   NewStyleProfile,
   Note,
@@ -106,6 +110,14 @@ export interface CharacterRepository {
   listArcSteps(arcId: string): ArcStep[]
   addArcStep(arcId: string, chapterId: string, description: string): ArcStep
   removeArcStep(id: string): boolean
+}
+
+/** World Building (Epic 7): luoghi, organizzazioni, sistemi/regole. */
+export interface WorldRepository {
+  list(projectId: string, kind?: WorldKind): WorldElement[]
+  create(projectId: string, input: NewWorldElement): WorldElement
+  update(id: string, patch: WorldElementUpdate): WorldElement | null
+  remove(id: string): boolean
 }
 
 /** Timeline Engine (Epic 9) + base della timeline personale (US-6.3). */

@@ -17,7 +17,8 @@ import {
   relationships,
   scenes,
   styleProfiles,
-  timelineEvents
+  timelineEvents,
+  worldElements
 } from './schema'
 
 interface SnapshotFile {
@@ -41,6 +42,7 @@ interface ProjectData {
   arcSteps: (typeof arcSteps.$inferSelect)[]
   timelineEvents: (typeof timelineEvents.$inferSelect)[]
   eventCharacters: (typeof eventCharacters.$inferSelect)[]
+  worldElements: (typeof worldElements.$inferSelect)[]
 }
 
 const MAX_AUTO_SNAPSHOTS = 10
@@ -124,7 +126,12 @@ export class SnapshotService {
             .from(eventCharacters)
             .where(inArray(eventCharacters.eventId, eventRows.map((e) => e.id)))
             .all()
-        : []
+        : [],
+      worldElements: orm
+        .select()
+        .from(worldElements)
+        .where(eq(worldElements.projectId, projectId))
+        .all()
     }
   }
 
@@ -155,6 +162,7 @@ export class SnapshotService {
     orm.delete(scenes).where(eq(scenes.projectId, projectId)).run()
     orm.delete(chapters).where(eq(chapters.projectId, projectId)).run()
     orm.delete(styleProfiles).where(eq(styleProfiles.projectId, projectId)).run()
+    orm.delete(worldElements).where(eq(worldElements.projectId, projectId)).run()
   }
 
   // --- API ------------------------------------------------------------------
@@ -234,6 +242,7 @@ export class SnapshotService {
     for (const r of d.arcSteps) orm.insert(arcSteps).values(r).run()
     for (const r of d.timelineEvents) orm.insert(timelineEvents).values(r).run()
     for (const r of d.eventCharacters) orm.insert(eventCharacters).values(r).run()
+    for (const r of d.worldElements ?? []) orm.insert(worldElements).values(r).run()
     this.db.persist()
     return true
   }

@@ -110,6 +110,17 @@ CREATE TABLE IF NOT EXISTS arc_steps (
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS world_elements (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  details TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_world_project ON world_elements(project_id);
 CREATE TABLE IF NOT EXISTS timeline_events (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,

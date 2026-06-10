@@ -166,6 +166,27 @@ export interface ArcStep {
   createdAt: string
 }
 
+// --- World Building (Epic 7) -------------------------------------------------
+
+export type WorldKind = 'place' | 'organization' | 'system'
+
+export interface WorldElement {
+  id: string
+  projectId: string
+  kind: WorldKind
+  name: string
+  description: string
+  /** Dettagli liberi: regole, gerarchie, storia, aspetto… */
+  details: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type NewWorldElement = Pick<WorldElement, 'kind' | 'name'> &
+  Partial<Pick<WorldElement, 'description' | 'details'>>
+
+export type WorldElementUpdate = Partial<Pick<WorldElement, 'name' | 'description' | 'details'>>
+
 // --- Timeline Engine (Epic 9) ----------------------------------------------
 
 export interface TimelineEvent {

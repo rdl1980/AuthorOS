@@ -122,6 +122,17 @@ export const arcSteps = sqliteTable('arc_steps', {
   createdAt: text('created_at').notNull()
 })
 
+export const worldElements = sqliteTable('world_elements', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  kind: text('kind', { enum: ['place', 'organization', 'system'] }).notNull(),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  details: text('details').notNull().default(''),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
 export const timelineEvents = sqliteTable('timeline_events', {
   id: text('id').primaryKey(),
   projectId: text('project_id').notNull(),

@@ -12,7 +12,8 @@ const KIND_META: Record<SearchKind, { icon: string; label: string }> = {
   chapter: { icon: '📖', label: 'Capitoli' },
   note: { icon: '📝', label: 'Note' },
   character: { icon: '🎭', label: 'Personaggi' },
-  event: { icon: '🕒', label: 'Eventi' }
+  event: { icon: '🕒', label: 'Eventi' },
+  world: { icon: '🌍', label: 'Mondo' }
 }
 
 export function SearchSnapshotsView(): JSX.Element {
@@ -72,6 +73,8 @@ export function SearchSnapshotsView(): JSX.Element {
       goTo('writing')
     } else if (r.kind === 'character') {
       goTo('characters')
+    } else if (r.kind === 'world') {
+      goTo('world')
     } else {
       goTo('timeline')
     }

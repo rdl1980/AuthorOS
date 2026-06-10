@@ -16,6 +16,7 @@ import {
   scenes,
   styleProfiles,
   timelineEvents,
+  worldElements,
   type ProjectRow
 } from './schema'
 import type { ProjectRepository } from './types'
@@ -237,6 +238,14 @@ export class SqliteProjectRepository implements ProjectRepository {
       }
     }
 
+    // World Building: luoghi, organizzazioni, sistemi
+    for (const w of orm.select().from(worldElements).where(eq(worldElements.projectId, id)).all()) {
+      orm
+        .insert(worldElements)
+        .values({ ...w, id: randomUUID(), projectId: copy.id, createdAt: now, updatedAt: now })
+        .run()
+    }
+
     // Timeline: eventi + collegamenti ai personaggi (rimappati)
     const srcEvents = orm
       .select()
@@ -324,6 +333,7 @@ export class SqliteProjectRepository implements ProjectRepository {
     orm.delete(scenes).where(eq(scenes.projectId, id)).run()
     orm.delete(chapters).where(eq(chapters.projectId, id)).run()
     orm.delete(styleProfiles).where(eq(styleProfiles.projectId, id)).run()
+    orm.delete(worldElements).where(eq(worldElements.projectId, id)).run()
     orm.delete(projects).where(eq(projects.id, id)).run()
 
     this.db.persist()

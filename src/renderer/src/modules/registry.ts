@@ -6,6 +6,7 @@ import { AuthorVoiceView } from './views/AuthorVoiceView'
 import { StructureView } from './views/StructureView'
 import { CharactersView } from './views/CharactersView'
 import { TimelineView } from './views/TimelineView'
+import { WorldView } from './views/WorldView'
 import { AiEditorView } from './views/AiEditorView'
 import { PublishingView } from './views/PublishingView'
 import { SearchSnapshotsView } from './views/SearchSnapshotsView'
@@ -71,6 +72,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: CharactersView
+  },
+  {
+    id: 'world',
+    epic: 7,
+    title: 'Mondo',
+    icon: '🌍',
+    release: 'V1',
+    status: 'ready',
+    component: WorldView
   },
   {
     id: 'timeline',

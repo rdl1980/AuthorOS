@@ -10,8 +10,11 @@ import type {
   NoteScope,
   ProjectUpdate,
   SceneUpdate,
+  NewWorldElement,
   StyleProfileUpdate,
-  TimelineEventUpdate
+  TimelineEventUpdate,
+  WorldElementUpdate,
+  WorldKind
 } from '@shared/domain'
 import type { AIProviderId, SettingsUpdate } from '@shared/settings'
 import { AIGateway } from './ai/gateway'
@@ -21,7 +24,8 @@ import type {
   ProjectRepository,
   StructureRepository,
   StyleRepository,
-  TimelineRepository
+  TimelineRepository,
+  WorldRepository
 } from './data/types'
 import type { SettingsRepository } from './data/settings-repository'
 import type { SearchService } from './data/search-service'
@@ -35,6 +39,7 @@ interface Deps {
   structure: StructureRepository
   characters: CharacterRepository
   timeline: TimelineRepository
+  world: WorldRepository
   settings: SettingsRepository
   searchService: SearchService
   snapshots: SnapshotService
@@ -46,7 +51,7 @@ type LiveProvider = Exclude<AIProviderId, 'mock'>
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
 export function registerIpc(
   ipc: IpcMain,
-  { projects, manuscript, styles, structure, characters, timeline, settings, searchService, snapshots }: Deps
+  { projects, manuscript, styles, structure, characters, timeline, world, settings, searchService, snapshots }: Deps
 ): void {
   const ai = new AIGateway(() => settings.resolveAi())
   const publishing = new PublishingService(projects, manuscript, structure)
@@ -175,6 +180,14 @@ export function registerIpc(
   ipc.handle('snap:remove', (_e, projectId: string, file: string) =>
     snapshots.remove(projectId, file)
   )
+
+  // World Building (Epic 7)
+  ipc.handle('world:list', (_e, projectId: string, kind?: WorldKind) => world.list(projectId, kind))
+  ipc.handle('world:create', (_e, projectId: string, input: NewWorldElement) =>
+    world.create(projectId, input)
+  )
+  ipc.handle('world:update', (_e, id: string, patch: WorldElementUpdate) => world.update(id, patch))
+  ipc.handle('world:remove', (_e, id: string) => world.remove(id))
 
   // Timeline Engine (Epic 9)
   ipc.handle('tl:events', (_e, projectId: string) => timeline.listEvents(projectId))

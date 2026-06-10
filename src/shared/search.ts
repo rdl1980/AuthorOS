@@ -1,6 +1,6 @@
 // Ricerca full-text di progetto (US-24.1) e snapshot locali (US-24.2/24.3).
 
-export type SearchKind = 'scene' | 'chapter' | 'note' | 'character' | 'event'
+export type SearchKind = 'scene' | 'chapter' | 'note' | 'character' | 'event' | 'world'
 
 export interface SearchResult {
   kind: SearchKind
