@@ -1,0 +1,32 @@
+# Configurazione packaging (electron-builder).
+# Build: npm run dist (installer NSIS) oppure npm run dist:dir (cartella win-unpacked).
+appId: com.rdl1980.authoros
+productName: AuthorOS
+copyright: © 2026 rdl1980
+
+directories:
+  output: release
+
+# electron-vite compila in out/; package.json e i node_modules di produzione
+# (sql.js, docx, jszip, mammoth, marked, drizzle-orm, sdk) entrano di default.
+files:
+  - out/**
+
+# sql.js carica sql-wasm.wasm da filesystem a runtime: fuori dall'asar.
+asarUnpack:
+  - node_modules/sql.js/dist/*.wasm
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  shortcutName: AuthorOS
+  artifactName: AuthorOS-Setup-${version}.${ext}
+
+# Niente firma del codice in questa fase (installer non firmato).
+forceCodeSigning: false

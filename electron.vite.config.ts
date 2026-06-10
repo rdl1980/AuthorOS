@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    // marked è ESM-only: va bundlato nel main (CJS), non lasciato come require esterno.
+    plugins: [externalizeDepsPlugin({ exclude: ['marked'] })],
     resolve: {
       alias: { '@shared': resolve(__dirname, 'src/shared') }
     },

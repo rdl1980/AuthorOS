@@ -31,9 +31,22 @@ scripts/       generate-backlog-html.mjs (rigenera il backlog visuale)
 npm install
 npm run dev          # avvia l'app in sviluppo
 npm run build        # build di produzione
+npm run test         # suite Vitest (59 test headless)
 npm run typecheck    # controllo tipi
 npm run backlog:html # rigenera AuthorOS_Visual_Backlog.html dal markdown
 ```
+
+## Packaging (Windows)
+
+```bash
+npm run dist         # installer NSIS → release/AuthorOS-Setup-<versione>.exe
+npm run dist:dir     # solo cartella release/win-unpacked (test rapido)
+```
+
+Note: l'installer non è firmato (niente code signing in questa fase) e usa l'icona
+di default di Electron. Il database è SQLite via sql.js (WASM, nessuna dipendenza
+nativa); il file `.wasm` è estratto dall'asar (`asarUnpack`). I dati utente vivono
+in `%APPDATA%/authoros/authoros-data`.
 
 > Dopo ogni modifica a `AuthorOS_Backlog.md`, rilancia `npm run backlog:html` per tenere allineato il backlog visuale.
 
