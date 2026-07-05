@@ -1,11 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Chapter, Note, ProjectStats, Scene } from '@shared/domain'
+import type {
+  Chapter,
+  Character,
+  Note,
+  ProjectStats,
+  Scene,
+  SceneStatus,
+  WorldElement
+} from '@shared/domain'
 import { countWords } from '@shared/text'
 import { useLibrary } from '../../store/useLibrary'
 import { useWorkspace } from '../../store/useWorkspace'
 import { ChapterTree } from './workspace/ChapterTree'
 import { SceneEditor } from './workspace/SceneEditor'
 import { NotesPanel } from './workspace/NotesPanel'
+import { SceneMetaBar } from './workspace/SceneMetaBar'
+import { SceneBoard } from './workspace/SceneBoard'
+import { OutlineTable } from './workspace/OutlineTable'
+
+type ViewMode = 'editor' | 'board' | 'outline'
 
 const EMPTY_STATS: ProjectStats = { words: 0, scenes: 0, chapters: 0 }
 
@@ -41,8 +54,18 @@ export function WritingWorkspaceView(): JSX.Element {
   const [notes, setNotes] = useState<Note[]>([])
   const [saving, setSaving] = useState(false)
 
+  // Scene Board & Metadati (Epic 28)
+  const [viewMode, setViewMode] = useState<ViewMode>('editor')
+  const [charList, setCharList] = useState<Character[]>([])
+  const [places, setPlaces] = useState<WorldElement[]>([])
+  const [sceneCharMap, setSceneCharMap] = useState<Map<string, string[]>>(new Map())
+  const [filterChar, setFilterChar] = useState('')
+  const [filterPlace, setFilterPlace] = useState('')
+  const [filterStatus, setFilterStatus] = useState<'' | SceneStatus>('')
+
   const ms = window.authoros.manuscript
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const metaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastProjectRef = useRef<string | null | undefined>(undefined)
 
   const reloadTree = useCallback(async () => {
@@ -57,6 +80,21 @@ export function WritingWorkspaceView(): JSX.Element {
     setStats(st)
   }, [project, ms])
 
+  // Metadati Epic 28: cast, luoghi e presenze personaggio↔scena.
+  const reloadMeta = useCallback(async () => {
+    if (!project) return
+    const [chars, pls, links] = await Promise.all([
+      window.authoros.characters.list(project.id),
+      window.authoros.world.list(project.id, 'place'),
+      ms.sceneChars(project.id)
+    ])
+    setCharList(chars)
+    setPlaces(pls)
+    const map = new Map<string, string[]>()
+    for (const l of links) map.set(l.sceneId, [...(map.get(l.sceneId) ?? []), l.characterId])
+    setSceneCharMap(map)
+  }, [project, ms])
+
   // Carica all'apertura/cambio progetto. La selezione si azzera solo se il
   // progetto è cambiato davvero (non al mount: la ricerca può pre-selezionare).
   useEffect(() => {
@@ -67,6 +105,7 @@ export function WritingWorkspaceView(): JSX.Element {
     }
     lastProjectRef.current = pid
     void reloadTree()
+    void reloadMeta()
   }, [project?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Note della scena selezionata.
@@ -213,6 +252,48 @@ export function WritingWorkspaceView(): JSX.Element {
     }, 600)
   }
 
+  // --- metadati scena (US-28.1) --------------------------------------------
+
+  const pendingMeta = useRef(
+    new Map<string, { pov?: string; locationId?: string | null; synopsis?: string; status?: SceneStatus }>()
+  )
+  const patchSceneMeta = (
+    sceneId: string,
+    patch: { pov?: string; locationId?: string | null; synopsis?: string; status?: SceneStatus }
+  ): void => {
+    setScenes((ss) => ss.map((s) => (s.id === sceneId ? { ...s, ...patch } : s)))
+    pendingMeta.current.set(sceneId, { ...pendingMeta.current.get(sceneId), ...patch })
+    if (metaTimer.current) clearTimeout(metaTimer.current)
+    metaTimer.current = setTimeout(() => {
+      const batch = [...pendingMeta.current.entries()]
+      pendingMeta.current.clear()
+      for (const [id, p] of batch) void ms.sceneUpdate(id, p)
+    }, 500)
+  }
+
+  const linkChar = async (sceneId: string, characterId: string): Promise<void> => {
+    await ms.sceneCharLink(sceneId, characterId)
+    await reloadMeta()
+  }
+  const unlinkChar = async (sceneId: string, characterId: string): Promise<void> => {
+    await ms.sceneCharUnlink(sceneId, characterId)
+    await reloadMeta()
+  }
+
+  // Filtri bacheca/outline (US-28.4)
+  const visibleScenes = scenes.filter((s) => {
+    if (filterStatus && s.status !== filterStatus) return false
+    if (filterPlace && s.locationId !== filterPlace) return false
+    if (filterChar && !(sceneCharMap.get(s.id) ?? []).includes(filterChar)) return false
+    return true
+  })
+  const filtersActive = Boolean(filterChar || filterPlace || filterStatus)
+
+  const openSceneInEditor = (sceneId: string): void => {
+    select(sceneId)
+    setViewMode('editor')
+  }
+
   // --- note ---------------------------------------------------------------
 
   const reloadNotes = async (): Promise<void> => {
@@ -285,6 +366,25 @@ export function WritingWorkspaceView(): JSX.Element {
           </span>
         )}
         <div className="ml-auto flex gap-2">
+          {/* Switcher vista: editor / bacheca / outline (US-28.2, US-28.3) */}
+          <span className="flex overflow-hidden rounded-md border border-line text-xs">
+            {(
+              [
+                ['editor', '✍️', 'Editor'],
+                ['board', '🗂️', 'Bacheca delle scene'],
+                ['outline', '📋', 'Outline']
+              ] as [ViewMode, string, string][]
+            ).map(([mode, icon, label]) => (
+              <button
+                key={mode}
+                className={`px-3 py-1 ${viewMode === mode ? 'bg-cyan/15 text-cyan' : 'hover:text-cyan'}`}
+                title={label}
+                onClick={() => setViewMode(mode)}
+              >
+                {icon}
+              </button>
+            ))}
+          </span>
           <button
             className={`rounded-md border px-3 py-1 text-xs ${findOpen ? 'border-cyan bg-cyan/15 text-cyan' : 'border-line hover:border-cyan'}`}
             onClick={() => setFindOpen((v) => !v)}
@@ -356,8 +456,97 @@ export function WritingWorkspaceView(): JSX.Element {
         </div>
       )}
 
+      {/* Filtri bacheca/outline (US-28.4) */}
+      {viewMode !== 'editor' && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-panel/50 p-2 text-xs">
+          <span className="text-muted">Filtra:</span>
+          <select
+            className="rounded-md border border-line bg-bg/60 px-2 py-1 outline-none focus:border-cyan"
+            value={filterChar}
+            onChange={(e) => setFilterChar(e.target.value)}
+          >
+            <option value="">Personaggio (tutti)</option>
+            {charList.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="rounded-md border border-line bg-bg/60 px-2 py-1 outline-none focus:border-cyan"
+            value={filterPlace}
+            onChange={(e) => setFilterPlace(e.target.value)}
+          >
+            <option value="">Luogo (tutti)</option>
+            {places.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="rounded-md border border-line bg-bg/60 px-2 py-1 outline-none focus:border-cyan"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as '' | SceneStatus)}
+          >
+            <option value="">Stato (tutti)</option>
+            <option value="draft">Bozza</option>
+            <option value="revision">Revisione</option>
+            <option value="final">Definitiva</option>
+          </select>
+          {filtersActive && (
+            <button
+              className="rounded-md border border-line px-2 py-1 hover:border-cyan"
+              onClick={() => {
+                setFilterChar('')
+                setFilterPlace('')
+                setFilterStatus('')
+              }}
+            >
+              ✕ Azzera
+            </button>
+          )}
+          <span className="ml-auto text-muted">
+            {visibleScenes.length}/{scenes.length} scene
+          </span>
+        </div>
+      )}
+
+      {/* Bacheca (US-28.2) */}
+      {viewMode === 'board' && (
+        <div className="min-h-0 flex-1 rounded-2xl border border-line bg-panel/40 p-4">
+          <SceneBoard
+            chapters={chapters}
+            scenes={visibleScenes}
+            characters={charList}
+            places={places}
+            sceneCharMap={sceneCharMap}
+            onOpenScene={openSceneInEditor}
+            onSynopsis={(id, synopsis) => patchSceneMeta(id, { synopsis })}
+            onReorder={(chapterId, ids) =>
+              void ms.scenesReorder(chapterId, ids).then(() => reloadTree())
+            }
+          />
+        </div>
+      )}
+
+      {/* Outline (US-28.3) */}
+      {viewMode === 'outline' && (
+        <div className="min-h-0 flex-1 rounded-2xl border border-line bg-panel/40 p-2">
+          <OutlineTable
+            chapters={chapters}
+            scenes={visibleScenes}
+            characters={charList}
+            places={places}
+            sceneCharMap={sceneCharMap}
+            onOpenScene={openSceneInEditor}
+            onStatus={(id, status) => patchSceneMeta(id, { status })}
+          />
+        </div>
+      )}
+
       {/* Corpo a 3 colonne */}
-      <div className="flex min-h-0 flex-1 gap-4">
+      <div className={`flex min-h-0 flex-1 gap-4 ${viewMode !== 'editor' ? 'hidden' : ''}`}>
         {!focusMode && (
           <aside className="w-64 shrink-0 rounded-2xl border border-line bg-panel/40 p-3">
             <ChapterTree
@@ -377,9 +566,24 @@ export function WritingWorkspaceView(): JSX.Element {
           </aside>
         )}
 
-        <section className="min-w-0 flex-1 rounded-2xl border border-line bg-panel/40 p-4">
+        <section className="flex min-w-0 flex-1 flex-col rounded-2xl border border-line bg-panel/40 p-4">
           {selectedScene ? (
-            <SceneEditor scene={selectedScene} onChange={onSceneChange} saving={saving} />
+            <>
+              {!focusMode && (
+                <SceneMetaBar
+                  scene={selectedScene}
+                  characters={charList}
+                  places={places}
+                  linkedCharIds={sceneCharMap.get(selectedScene.id) ?? []}
+                  onPatch={(patch) => patchSceneMeta(selectedScene.id, patch)}
+                  onLink={(cid) => void linkChar(selectedScene.id, cid)}
+                  onUnlink={(cid) => void unlinkChar(selectedScene.id, cid)}
+                />
+              )}
+              <div className="min-h-0 flex-1">
+                <SceneEditor scene={selectedScene} onChange={onSceneChange} saving={saving} />
+              </div>
+            </>
           ) : (
             <div className="flex h-full items-center justify-center text-muted">
               Seleziona o crea una scena per iniziare a scrivere.

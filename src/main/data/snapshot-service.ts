@@ -16,6 +16,7 @@ import {
   notes,
   projects,
   relationships,
+  sceneCharacters,
   scenes,
   styleProfiles,
   timelineEvents,
@@ -33,6 +34,8 @@ interface ProjectData {
   project: typeof projects.$inferSelect
   chapters: (typeof chapters.$inferSelect)[]
   scenes: (typeof scenes.$inferSelect)[]
+  /** Presenze personaggio↔scena (US-28.1); assente nei file pre-v3. */
+  sceneCharacters?: (typeof sceneCharacters.$inferSelect)[]
   notes: (typeof notes.$inferSelect)[]
   beats: (typeof beats.$inferSelect)[]
   beatScenes: (typeof beatScenes.$inferSelect)[]
@@ -97,10 +100,18 @@ export class SnapshotService {
       .from(timelineEvents)
       .where(eq(timelineEvents.projectId, projectId))
       .all()
+    const sceneRows = orm.select().from(scenes).where(eq(scenes.projectId, projectId)).all()
     return {
       project,
       chapters: orm.select().from(chapters).where(eq(chapters.projectId, projectId)).all(),
-      scenes: orm.select().from(scenes).where(eq(scenes.projectId, projectId)).all(),
+      scenes: sceneRows,
+      sceneCharacters: sceneRows.length
+        ? orm
+            .select()
+            .from(sceneCharacters)
+            .where(inArray(sceneCharacters.sceneId, sceneRows.map((s) => s.id)))
+            .all()
+        : [],
       notes: orm.select().from(notes).where(eq(notes.projectId, projectId)).all(),
       beats: beatRows,
       beatScenes: beatRows.length
@@ -169,6 +180,11 @@ export class SnapshotService {
     orm.delete(timelineEvents).where(eq(timelineEvents.projectId, projectId)).run()
     orm.delete(characters).where(eq(characters.projectId, projectId)).run()
     orm.delete(notes).where(eq(notes.projectId, projectId)).run()
+    if (data.scenes.length)
+      orm
+        .delete(sceneCharacters)
+        .where(inArray(sceneCharacters.sceneId, data.scenes.map((s) => s.id)))
+        .run()
     orm.delete(scenes).where(eq(scenes.projectId, projectId)).run()
     orm.delete(chapters).where(eq(chapters.projectId, projectId)).run()
     orm.delete(styleProfiles).where(eq(styleProfiles.projectId, projectId)).run()
@@ -253,6 +269,7 @@ export class SnapshotService {
     for (const r of d.timelineEvents) orm.insert(timelineEvents).values(r).run()
     for (const r of d.eventCharacters) orm.insert(eventCharacters).values(r).run()
     for (const r of d.worldElements ?? []) orm.insert(worldElements).values(r).run()
+    for (const r of d.sceneCharacters ?? []) orm.insert(sceneCharacters).values(r).run()
     this.db.persist()
     return true
   }
@@ -312,7 +329,15 @@ export class SnapshotService {
     for (const r of d.scenes)
       orm
         .insert(scenes)
-        .values({ ...r, id: rid(r.id), projectId, chapterId: rid(r.chapterId), createdAt: now, updatedAt: now })
+        .values({
+          ...r,
+          id: rid(r.id),
+          projectId,
+          chapterId: rid(r.chapterId),
+          locationId: r.locationId ? rid(r.locationId) : null,
+          createdAt: now,
+          updatedAt: now
+        })
         .run()
     for (const r of d.notes)
       orm
@@ -364,7 +389,12 @@ export class SnapshotService {
         .values({ id: randomUUID(), eventId: rid(r.eventId), characterId: rid(r.characterId) })
         .run()
     for (const r of d.worldElements ?? [])
-      orm.insert(worldElements).values({ ...r, id: randomUUID(), projectId, createdAt: now, updatedAt: now }).run()
+      orm.insert(worldElements).values({ ...r, id: rid(r.id), projectId, createdAt: now, updatedAt: now }).run()
+    for (const r of d.sceneCharacters ?? [])
+      orm
+        .insert(sceneCharacters)
+        .values({ id: randomUUID(), sceneId: rid(r.sceneId), characterId: rid(r.characterId) })
+        .run()
 
     this.db.persist()
     return project

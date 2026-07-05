@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS scenes (
   content TEXT NOT NULL DEFAULT '',
   word_count INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'draft',
+  pov TEXT NOT NULL DEFAULT '',
+  location_id TEXT,
+  synopsis TEXT NOT NULL DEFAULT '',
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -46,6 +49,12 @@ CREATE TABLE IF NOT EXISTS writing_stats (
   words_added INTEGER NOT NULL DEFAULT 0
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_wstats_project_date ON writing_stats(project_id, date);
+CREATE TABLE IF NOT EXISTS scene_characters (
+  id TEXT PRIMARY KEY,
+  scene_id TEXT NOT NULL,
+  character_id TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_scenechars_scene ON scene_characters(scene_id);
 CREATE TABLE IF NOT EXISTS notes (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
@@ -183,6 +192,20 @@ export const MIGRATIONS: { version: number; statements: string[] }[] = [
         words_added INTEGER NOT NULL DEFAULT 0
       )`,
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_wstats_project_date ON writing_stats(project_id, date)'
+    ]
+  },
+  {
+    version: 3, // Epic 28: metadati scena (POV, luogo, sinossi) + personaggi in scena
+    statements: [
+      "ALTER TABLE scenes ADD COLUMN pov TEXT NOT NULL DEFAULT ''",
+      'ALTER TABLE scenes ADD COLUMN location_id TEXT',
+      "ALTER TABLE scenes ADD COLUMN synopsis TEXT NOT NULL DEFAULT ''",
+      `CREATE TABLE IF NOT EXISTS scene_characters (
+        id TEXT PRIMARY KEY,
+        scene_id TEXT NOT NULL,
+        character_id TEXT NOT NULL
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_scenechars_scene ON scene_characters(scene_id)'
     ]
   }
 ]

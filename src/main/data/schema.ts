@@ -40,9 +40,18 @@ export const scenes = sqliteTable('scenes', {
   status: text('status', { enum: ['draft', 'revision', 'final'] })
     .notNull()
     .default('draft'),
+  pov: text('pov').notNull().default(''),
+  locationId: text('location_id'),
+  synopsis: text('synopsis').notNull().default(''),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull()
+})
+
+export const sceneCharacters = sqliteTable('scene_characters', {
+  id: text('id').primaryKey(),
+  sceneId: text('scene_id').notNull(),
+  characterId: text('character_id').notNull()
 })
 
 export const writingStats = sqliteTable('writing_stats', {

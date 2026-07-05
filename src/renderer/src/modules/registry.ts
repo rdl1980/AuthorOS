@@ -2,6 +2,7 @@ import type { AppModule } from './types'
 import { LibraryView } from './views/LibraryView'
 import { WritingWorkspaceView } from './views/WritingWorkspaceView'
 import { AiAssistantView } from './views/AiAssistantView'
+import { CopilotView } from './views/CopilotView'
 import { AuthorVoiceView } from './views/AuthorVoiceView'
 import { ChatView } from './views/ChatView'
 import { StructureView } from './views/StructureView'
@@ -30,6 +31,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: LibraryView
+  },
+  {
+    id: 'copilot',
+    epic: 20,
+    title: 'Copilot',
+    icon: '🤖',
+    release: 'V1.5',
+    status: 'ready',
+    component: CopilotView
   },
   {
     id: 'writing',

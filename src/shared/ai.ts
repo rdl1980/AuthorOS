@@ -70,6 +70,7 @@ export interface AIStatus {
  * - coherence-check: segnala incoerenze in scheda/arco (US-6.4, US-5.4)
  * - editor-*: revisione del testo per l'AI Editor (Epic 10)
  * - plot-holes / plot-scene-audit: analisi della trama (Epic 8)
+ * - copilot-*: Author Copilot, dall'idea alla mappa del romanzo (Epic 20)
  */
 export type AssistKind =
   | 'character-profile'
@@ -81,3 +82,5 @@ export type AssistKind =
   | 'editor-pacing'
   | 'plot-holes'
   | 'plot-scene-audit'
+  | 'copilot-blueprint'
+  | 'copilot-arc'

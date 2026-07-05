@@ -13,6 +13,7 @@ import {
   notes,
   projects,
   relationships,
+  sceneCharacters,
   scenes,
   styleProfiles,
   timelineEvents,
@@ -128,8 +129,20 @@ export class SqliteProjectRepository implements ProjectRepository {
         .values({ ...ch, id: nid, projectId: copy.id, createdAt: now, updatedAt: now })
         .run()
     }
+    // World Building copiato prima delle scene: serve la mappa per scenes.locationId
+    const worldMap = new Map<string, string>()
+    for (const w of orm.select().from(worldElements).where(eq(worldElements.projectId, id)).all()) {
+      const nid = randomUUID()
+      worldMap.set(w.id, nid)
+      orm
+        .insert(worldElements)
+        .values({ ...w, id: nid, projectId: copy.id, createdAt: now, updatedAt: now })
+        .run()
+    }
+
     const sceneMap = new Map<string, string>()
-    for (const sc of orm.select().from(scenes).where(eq(scenes.projectId, id)).all()) {
+    const srcScenes = orm.select().from(scenes).where(eq(scenes.projectId, id)).all()
+    for (const sc of srcScenes) {
       const nid = randomUUID()
       sceneMap.set(sc.id, nid)
       orm
@@ -139,6 +152,7 @@ export class SqliteProjectRepository implements ProjectRepository {
           id: nid,
           projectId: copy.id,
           chapterId: chapterMap.get(sc.chapterId) ?? sc.chapterId,
+          locationId: sc.locationId ? (worldMap.get(sc.locationId) ?? null) : null,
           createdAt: now,
           updatedAt: now
         })
@@ -243,12 +257,20 @@ export class SqliteProjectRepository implements ProjectRepository {
       }
     }
 
-    // World Building: luoghi, organizzazioni, sistemi
-    for (const w of orm.select().from(worldElements).where(eq(worldElements.projectId, id)).all()) {
-      orm
-        .insert(worldElements)
-        .values({ ...w, id: randomUUID(), projectId: copy.id, createdAt: now, updatedAt: now })
-        .run()
+    // Presenze personaggio↔scena (US-28.1), rimappate su nuovi id
+    if (srcScenes.length) {
+      const scLinks = orm
+        .select()
+        .from(sceneCharacters)
+        .where(inArray(sceneCharacters.sceneId, srcScenes.map((s) => s.id)))
+        .all()
+      for (const l of scLinks) {
+        const sceneId = sceneMap.get(l.sceneId)
+        const characterId = charMap.get(l.characterId)
+        if (sceneId && characterId) {
+          orm.insert(sceneCharacters).values({ id: randomUUID(), sceneId, characterId }).run()
+        }
+      }
     }
 
     // Timeline: eventi + collegamenti ai personaggi (rimappati)
@@ -335,6 +357,14 @@ export class SqliteProjectRepository implements ProjectRepository {
     orm.delete(timelineEvents).where(eq(timelineEvents.projectId, id)).run()
 
     orm.delete(notes).where(eq(notes.projectId, id)).run()
+    const sceneIds = orm
+      .select({ id: scenes.id })
+      .from(scenes)
+      .where(eq(scenes.projectId, id))
+      .all()
+      .map((r) => r.id)
+    if (sceneIds.length)
+      orm.delete(sceneCharacters).where(inArray(sceneCharacters.sceneId, sceneIds)).run()
     orm.delete(scenes).where(eq(scenes.projectId, id)).run()
     orm.delete(chapters).where(eq(chapters.projectId, id)).run()
     orm.delete(styleProfiles).where(eq(styleProfiles.projectId, id)).run()

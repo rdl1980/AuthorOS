@@ -2,7 +2,16 @@ import { asc, eq, inArray } from 'drizzle-orm'
 import { analyzePacing } from '@shared/editor'
 import type { PlotReport, SceneFlag } from '@shared/plot'
 import type { DB } from './db'
-import { beats, beatScenes, chapters, characters, eventCharacters, scenes, timelineEvents } from './schema'
+import {
+  beats,
+  beatScenes,
+  chapters,
+  characters,
+  eventCharacters,
+  sceneCharacters,
+  scenes,
+  timelineEvents
+} from './schema'
 
 const SHORT_SCENE_WORDS = 80
 
@@ -52,8 +61,21 @@ export class PlotService {
             .map((r) => r.characterId)
         : []
     )
+    // US-28.5: un personaggio collegato esplicitamente a una scena è "usato"
+    // anche se non è ancora menzionato nel testo.
+    const sceneLinkedCharIds = new Set(
+      sceneRows.length
+        ? orm
+            .select({ characterId: sceneCharacters.characterId })
+            .from(sceneCharacters)
+            .where(inArray(sceneCharacters.sceneId, sceneRows.map((s) => s.id)))
+            .all()
+            .map((r) => r.characterId)
+        : []
+    )
     const unusedCharacters = charRows
       .filter((c) => {
+        if (sceneLinkedCharIds.has(c.id)) return false
         const full = c.name.trim().toLowerCase()
         const first = full.split(/\s+/)[0]
         const mentioned =

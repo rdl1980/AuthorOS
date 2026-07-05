@@ -30,10 +30,12 @@ import type {
   ProjectStats,
   ProjectUpdate,
   Scene,
+  SceneCharacterLink,
   SceneUpdate,
   StyleProfile,
   StyleProfileUpdate
 } from '@shared/domain'
+import type { Blueprint } from '@shared/copilot'
 import type { AIProviderId, AppSettings, SettingsUpdate } from '@shared/settings'
 import type { ExportResult, ImportResult } from '@shared/publishing'
 import type { SearchResult, SnapshotMeta } from '@shared/search'
@@ -146,7 +148,18 @@ const api = {
       opts?: { sceneId?: string; matchCase?: boolean }
     ): Promise<ReplaceResult> => ipcRenderer.invoke('ms:replace', projectId, find, replaceWith, opts),
     statsDaily: (projectId: string, sinceDays: number): Promise<DailyStat[]> =>
-      ipcRenderer.invoke('ms:statsDaily', projectId, sinceDays)
+      ipcRenderer.invoke('ms:statsDaily', projectId, sinceDays),
+
+    sceneChars: (projectId: string): Promise<SceneCharacterLink[]> =>
+      ipcRenderer.invoke('ms:sceneChars', projectId),
+    sceneCharLink: (sceneId: string, characterId: string): Promise<void> =>
+      ipcRenderer.invoke('ms:sceneCharLink', sceneId, characterId),
+    sceneCharUnlink: (sceneId: string, characterId: string): Promise<void> =>
+      ipcRenderer.invoke('ms:sceneCharUnlink', sceneId, characterId)
+  },
+  copilot: {
+    /** Epic 20: crea un progetto completo dalla mappa generata dall'AI. */
+    create: (bp: Blueprint): Promise<Project> => ipcRenderer.invoke('copilot:create', bp)
   },
   characters: {
     list: (projectId: string): Promise<Character[]> => ipcRenderer.invoke('char:list', projectId),

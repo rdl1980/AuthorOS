@@ -28,6 +28,7 @@ import type {
   ProjectStats,
   ProjectUpdate,
   Scene,
+  SceneCharacterLink,
   SceneUpdate,
   StyleProfile,
   StyleProfileUpdate
@@ -89,6 +90,11 @@ export interface ManuscriptRepository {
 
   // Statistiche di scrittura (US-27.1): parole nette per giorno.
   getDailyStats(projectId: string, sinceDays: number): DailyStat[]
+
+  // Personaggi presenti in scena (US-28.1)
+  listSceneCharacters(projectId: string): SceneCharacterLink[]
+  linkSceneCharacter(sceneId: string, characterId: string): void
+  unlinkSceneCharacter(sceneId: string, characterId: string): void
 }
 
 /** Profili di stile / Author Voice (Epic 23). Un solo profilo attivo per progetto. */

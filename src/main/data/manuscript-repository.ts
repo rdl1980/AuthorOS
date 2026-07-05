@@ -8,12 +8,13 @@ import type {
   NoteScope,
   ProjectStats,
   Scene,
+  SceneCharacterLink,
   SceneUpdate
 } from '@shared/domain'
 import { countWords } from '@shared/text'
 import type { DB } from './db'
 import { randomUUID as uuid } from 'node:crypto'
-import { beatScenes, chapters, notes, scenes, writingStats } from './schema'
+import { beatScenes, chapters, notes, sceneCharacters, scenes, writingStats } from './schema'
 import type { ManuscriptRepository } from './types'
 
 const now = (): string => new Date().toISOString()
@@ -70,6 +71,7 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
       .map((r) => r.id)
     if (sceneIds.length) {
       this.orm.delete(beatScenes).where(inArray(beatScenes.sceneId, sceneIds)).run()
+      this.orm.delete(sceneCharacters).where(inArray(sceneCharacters.sceneId, sceneIds)).run()
       this.orm.delete(notes).where(inArray(notes.sceneId, sceneIds)).run()
       this.orm.delete(scenes).where(inArray(scenes.id, sceneIds)).run()
     }
@@ -119,6 +121,9 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
       content: '',
       wordCount: 0,
       status: 'draft',
+      pov: '',
+      locationId: null,
+      synopsis: '',
       sortOrder: this.sceneIdsOfChapter(chapterId).length,
       createdAt: ts,
       updatedAt: ts
@@ -140,6 +145,9 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
         content,
         wordCount: newCount,
         status: patch.status !== undefined ? patch.status : current.status,
+        pov: patch.pov !== undefined ? patch.pov : current.pov,
+        locationId: patch.locationId !== undefined ? patch.locationId : current.locationId,
+        synopsis: patch.synopsis !== undefined ? patch.synopsis : current.synopsis,
         updatedAt: now()
       })
       .where(eq(scenes.id, id))
@@ -221,10 +229,46 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
 
   deleteScene(id: string): boolean {
     this.orm.delete(beatScenes).where(eq(beatScenes.sceneId, id)).run()
+    this.orm.delete(sceneCharacters).where(eq(sceneCharacters.sceneId, id)).run()
     this.orm.delete(notes).where(eq(notes.sceneId, id)).run()
     this.orm.delete(scenes).where(eq(scenes.id, id)).run()
     this.db.persist()
     return true
+  }
+
+  // --- Personaggi in scena (US-28.1) ---------------------------------------
+
+  listSceneCharacters(projectId: string): SceneCharacterLink[] {
+    const sceneIds = this.listScenes(projectId).map((s) => s.id)
+    if (!sceneIds.length) return []
+    return this.orm
+      .select({ sceneId: sceneCharacters.sceneId, characterId: sceneCharacters.characterId })
+      .from(sceneCharacters)
+      .where(inArray(sceneCharacters.sceneId, sceneIds))
+      .all()
+  }
+
+  linkSceneCharacter(sceneId: string, characterId: string): void {
+    const exists = this.orm
+      .select()
+      .from(sceneCharacters)
+      .where(
+        and(eq(sceneCharacters.sceneId, sceneId), eq(sceneCharacters.characterId, characterId))
+      )
+      .get()
+    if (exists) return
+    this.orm.insert(sceneCharacters).values({ id: randomUUID(), sceneId, characterId }).run()
+    this.db.persist()
+  }
+
+  unlinkSceneCharacter(sceneId: string, characterId: string): void {
+    this.orm
+      .delete(sceneCharacters)
+      .where(
+        and(eq(sceneCharacters.sceneId, sceneId), eq(sceneCharacters.characterId, characterId))
+      )
+      .run()
+    this.db.persist()
   }
 
   reorderScenes(_chapterId: string, orderedIds: string[]): void {

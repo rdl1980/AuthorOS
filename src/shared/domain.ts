@@ -47,6 +47,10 @@ export interface Scene {
   wordCount: number
   /** Stato di lavorazione (US-26.2). */
   status: SceneStatus
+  /** Metadati narrativi (US-28.1). */
+  pov: string
+  locationId: string | null
+  synopsis: string
   sortOrder: number
   createdAt: string
   updatedAt: string
@@ -62,7 +66,15 @@ export interface Note {
   updatedAt: string
 }
 
-export type SceneUpdate = Partial<Pick<Scene, 'title' | 'content' | 'status'>>
+export type SceneUpdate = Partial<
+  Pick<Scene, 'title' | 'content' | 'status' | 'pov' | 'locationId' | 'synopsis'>
+>
+
+/** Personaggio presente in una scena (US-28.1). */
+export interface SceneCharacterLink {
+  sceneId: string
+  characterId: string
+}
 
 /** Parole nette scritte in un giorno (US-27.1). */
 export interface DailyStat {

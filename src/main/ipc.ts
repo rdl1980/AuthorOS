@@ -18,6 +18,8 @@ import type {
   WorldKind
 } from '@shared/domain'
 import type { AIProviderId, SettingsUpdate } from '@shared/settings'
+import type { Blueprint } from '@shared/copilot'
+import { autowireToBeats } from '@shared/import'
 import { AIGateway, type ChatMessage } from './ai/gateway'
 import type { ContextBuilder } from './ai/context-builder'
 import type {
@@ -201,6 +203,43 @@ export function registerIpc(
   ipc.handle('ms:statsDaily', (_e, projectId: string, sinceDays: number) =>
     manuscript.getDailyStats(projectId, sinceDays)
   )
+
+  // Personaggi in scena (US-28.1)
+  ipc.handle('ms:sceneChars', (_e, projectId: string) =>
+    manuscript.listSceneCharacters(projectId)
+  )
+  ipc.handle('ms:sceneCharLink', (_e, sceneId: string, characterId: string) =>
+    manuscript.linkSceneCharacter(sceneId, characterId)
+  )
+  ipc.handle('ms:sceneCharUnlink', (_e, sceneId: string, characterId: string) =>
+    manuscript.unlinkSceneCharacter(sceneId, characterId)
+  )
+
+  // Author Copilot (Epic 20): materializza la mappa generata dall'AI in un
+  // progetto completo (capitoli+scene con sinossi, personaggi, beat autowire).
+  ipc.handle('copilot:create', (_e, bp: Blueprint) => {
+    const project = projects.create({
+      title: bp.title,
+      genre: bp.genre || undefined,
+      framework: bp.framework ?? undefined
+    })
+    for (const c of bp.characters) {
+      characters.createCharacter(project.id, { name: c.name, role: c.role, summary: c.summary })
+    }
+    const createdScenes = bp.chapters.map((c, i) => {
+      const ch = manuscript.createChapter(project.id, c.title)
+      const sc = manuscript.createScene(project.id, ch.id, `Scena ${i + 1}.1`)
+      if (c.synopsis) manuscript.updateScene(sc.id, { synopsis: c.synopsis })
+      return sc
+    })
+    if (bp.framework) {
+      const beats = structure.setFramework(project.id, bp.framework)
+      for (const pair of autowireToBeats(createdScenes, beats)) {
+        structure.linkScene(pair.beat.id, pair.scene.id)
+      }
+    }
+    return project
+  })
 
   // Author Voice / Style Profile (Epic 23)
   ipc.handle('style:list', (_e, projectId: string) => styles.list(projectId))

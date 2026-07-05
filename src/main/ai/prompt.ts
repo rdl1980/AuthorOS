@@ -116,6 +116,38 @@ export function composeAssist(kind: AssistKind, payload: string): Composed {
         user: payload.trim(),
         maxTokens: 2000
       }
+    case 'copilot-blueprint':
+      return {
+        system:
+          '[FORMATO-BLUEPRINT] Sei un architetto di storie. Dall\'idea fornita progetta la mappa di un romanzo. ' +
+          'Rispondi in italiano ESATTAMENTE in questo formato, senza altro testo:\n' +
+          'TITOLO: titolo proposto\n' +
+          'GENERE: genere\n' +
+          'LOGLINE: la storia in una frase\n' +
+          `FRAMEWORK: il più adatto tra ${'"' + ['Hero\'s Journey', 'Save The Cat Writes a Novel', 'Three Act Structure', 'Seven Point Story Structure', 'Snowflake Method', 'Dan Harmon Story Circle'].join('", "') + '"'}\n` +
+          'CAPITOLI:\n' +
+          '1. Titolo capitolo — cosa succede, in una riga\n' +
+          '(da 8 a 20 capitoli numerati)\n' +
+          'PERSONAGGI:\n' +
+          '- Nome | Ruolo | Sintesi in una riga\n' +
+          '(da 3 a 8 personaggi)',
+        user: payload.trim(),
+        maxTokens: 3000
+      }
+    case 'copilot-arc':
+      return {
+        system:
+          '[FORMATO-ARCO] Sei un editor di personaggi. Dalla scheda fornita progetta l\'arco di trasformazione. ' +
+          'Rispondi in italiano ESATTAMENTE con queste sei righe, senza altro testo:\n' +
+          'DESIDERIO: cosa vuole consapevolmente\n' +
+          'BISOGNO: cosa gli serve davvero\n' +
+          'PAURA: la paura che lo frena\n' +
+          'FERITA: l\'evento passato che lo ha segnato\n' +
+          'BUGIA: la convinzione sbagliata su di sé o sul mondo\n' +
+          'TRASFORMAZIONE: come cambia alla fine',
+        user: payload.trim(),
+        maxTokens: 800
+      }
     case 'plot-scene-audit':
       return {
         system:
