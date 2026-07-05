@@ -22,6 +22,8 @@ interface StoredSettings {
   editorSize: number
   editorWidth: AppSettings['editorWidth']
   editorTheme: AppSettings['editorTheme']
+  monthlyBudgetUsd: number | null
+  aiSpend: { month: string; usd: number }
   /** Chiavi cifrate (base64) per provider. */
   keys: Partial<Record<Exclude<AIProviderId, 'mock'>, string>>
 }
@@ -58,6 +60,8 @@ export class SettingsRepository {
       editorSize: DEFAULT_SETTINGS.editorSize,
       editorWidth: DEFAULT_SETTINGS.editorWidth,
       editorTheme: DEFAULT_SETTINGS.editorTheme,
+      monthlyBudgetUsd: null,
+      aiSpend: { month: '', usd: 0 },
       keys: {}
     }
     if (!existsSync(this.file)) return base
@@ -110,7 +114,9 @@ export class SettingsRepository {
       editorFont: this.data.editorFont ?? DEFAULT_SETTINGS.editorFont,
       editorSize: this.data.editorSize ?? DEFAULT_SETTINGS.editorSize,
       editorWidth: this.data.editorWidth ?? DEFAULT_SETTINGS.editorWidth,
-      editorTheme: this.data.editorTheme ?? DEFAULT_SETTINGS.editorTheme
+      editorTheme: this.data.editorTheme ?? DEFAULT_SETTINGS.editorTheme,
+      monthlyBudgetUsd: this.data.monthlyBudgetUsd ?? null,
+      aiSpentUsd: this.getAiSpentUsd()
     }
   }
 
@@ -131,6 +137,7 @@ export class SettingsRepository {
     if (patch.editorSize !== undefined) this.data.editorSize = patch.editorSize
     if (patch.editorWidth !== undefined) this.data.editorWidth = patch.editorWidth
     if (patch.editorTheme !== undefined) this.data.editorTheme = patch.editorTheme
+    if (patch.monthlyBudgetUsd !== undefined) this.data.monthlyBudgetUsd = patch.monthlyBudgetUsd
     this.save()
     return this.get()
   }
@@ -147,6 +154,30 @@ export class SettingsRepository {
     delete this.data.keys[provider]
     this.save()
     return this.get()
+  }
+
+  // --- Budget AI (US-29.7) ----------------------------------------------------
+
+  private currentMonth(): string {
+    return new Date().toISOString().slice(0, 7)
+  }
+
+  getMonthlyBudgetUsd(): number | null {
+    return this.data.monthlyBudgetUsd ?? null
+  }
+
+  /** Spesa del mese corrente (azzerata automaticamente al cambio mese). */
+  getAiSpentUsd(): number {
+    const spend = this.data.aiSpend ?? { month: '', usd: 0 }
+    return spend.month === this.currentMonth() ? spend.usd : 0
+  }
+
+  addAiSpend(usd: number): void {
+    const month = this.currentMonth()
+    const spend = this.data.aiSpend ?? { month: '', usd: 0 }
+    this.data.aiSpend =
+      spend.month === month ? { month, usd: spend.usd + usd } : { month, usd }
+    this.save()
   }
 
   /** Risoluzione per il gateway (main-only). */

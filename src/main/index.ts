@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { join } from 'node:path'
 import { registerIpc } from './ipc'
+import { ContextBuilder } from './ai/context-builder'
 import { initDatabase } from './data/db'
 import { SqliteProjectRepository } from './data/sqlite-repository'
 import { SqliteManuscriptRepository } from './data/manuscript-repository'
@@ -62,7 +63,8 @@ app.whenReady().then(async () => {
     settings,
     searchService: new SearchService(db),
     snapshots,
-    plot: new PlotService(db)
+    plot: new PlotService(db),
+    contextBuilder: new ContextBuilder(db)
   })
 
   // Auto-snapshot del progetto attivo ogni 15 minuti, solo se cambiato (US-24.3).

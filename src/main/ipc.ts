@@ -18,7 +18,8 @@ import type {
   WorldKind
 } from '@shared/domain'
 import type { AIProviderId, SettingsUpdate } from '@shared/settings'
-import { AIGateway } from './ai/gateway'
+import { AIGateway, type ChatMessage } from './ai/gateway'
+import type { ContextBuilder } from './ai/context-builder'
 import type {
   CharacterRepository,
   ManuscriptRepository,
@@ -46,6 +47,7 @@ interface Deps {
   searchService: SearchService
   snapshots: SnapshotService
   plot: PlotService
+  contextBuilder: ContextBuilder
 }
 
 type LiveProvider = Exclude<AIProviderId, 'mock'>
@@ -54,9 +56,9 @@ type LiveProvider = Exclude<AIProviderId, 'mock'>
 // Tutta la logica sensibile (API key, AI, accesso disco) resta nel main process.
 export function registerIpc(
   ipc: IpcMain,
-  { projects, manuscript, styles, structure, characters, timeline, world, settings, searchService, snapshots, plot }: Deps
+  { projects, manuscript, styles, structure, characters, timeline, world, settings, searchService, snapshots, plot, contextBuilder }: Deps
 ): void {
-  const ai = new AIGateway(() => settings.resolveAi())
+  const ai = new AIGateway(settings, contextBuilder)
   const publishing = new PublishingService(projects, manuscript, structure)
 
   // Publishing: export/import (Epic 16 + 21)
@@ -69,6 +71,30 @@ export function registerIpc(
   ipc.handle('ai:generate', (_e, req: AIRequest) => ai.generate(req))
   ipc.handle('ai:deriveStyle', (_e, sample: string) => ai.deriveStyle(sample))
   ipc.handle('ai:assist', (_e, kind: AssistKind, payload: string) => ai.assist(kind, payload))
+
+  // Streaming (US-29.2): chunk via eventi, interrompibile per requestId.
+  const aiStreams = new Map<string, AbortController>()
+  ipc.handle('ai:generateStream', async (e, req: AIRequest, requestId: string) => {
+    const ctrl = new AbortController()
+    aiStreams.set(requestId, ctrl)
+    try {
+      return await ai.generateStream(
+        req,
+        (text) => e.sender.send('ai:stream', { requestId, text }),
+        ctrl.signal
+      )
+    } finally {
+      aiStreams.delete(requestId)
+    }
+  })
+  ipc.handle('ai:streamAbort', (_e, requestId: string) => {
+    aiStreams.get(requestId)?.abort()
+  })
+
+  // Chat di progetto (US-29.6)
+  ipc.handle('ai:chat', (_e, projectId: string, history: ChatMessage[]) =>
+    ai.chat(projectId, history)
+  )
 
   // Impostazioni & AI Config (Epic 22)
   ipc.handle('settings:get', () => settings.get())

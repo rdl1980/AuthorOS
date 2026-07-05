@@ -25,6 +25,10 @@ export interface AppSettings {
   editorSize: number
   editorWidth: 'narrow' | 'normal' | 'wide'
   editorTheme: 'dark' | 'light'
+  /** Tetto di spesa AI mensile in USD (US-29.7); null = nessun limite. */
+  monthlyBudgetUsd: number | null
+  /** Spesa AI del mese corrente in USD (sola lettura). */
+  aiSpentUsd: number
 }
 
 export type SettingsUpdate = Partial<
@@ -39,7 +43,8 @@ export type SettingsUpdate = Partial<
   | 'editorFont'
   | 'editorSize'
   | 'editorWidth'
-  | 'editorTheme'>
+  | 'editorTheme'
+  | 'monthlyBudgetUsd'>
 >
 
 /** Cataloghi modelli per provider (US-22.2). */
@@ -68,5 +73,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   editorFont: 'serif',
   editorSize: 17,
   editorWidth: 'normal',
-  editorTheme: 'dark'
+  editorTheme: 'dark',
+  monthlyBudgetUsd: null,
+  aiSpentUsd: 0
 }

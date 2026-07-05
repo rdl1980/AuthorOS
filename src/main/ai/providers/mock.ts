@@ -22,4 +22,22 @@ export class MockProvider implements AIProvider {
       usage: { promptTokens, completionTokens, credits: estimateCredits(promptTokens, completionTokens) }
     }
   }
+
+  /** Streaming simulato (US-29.2): emette il testo a parole, interrompibile. */
+  async streamComplete(
+    input: CompletionInput,
+    onChunk: (text: string) => void,
+    signal?: AbortSignal
+  ): Promise<CompletionOutput> {
+    const full = await this.complete(input)
+    const words = full.text.split(/(?<=\s)/)
+    let emitted = ''
+    for (const w of words) {
+      if (signal?.aborted) break
+      emitted += w
+      onChunk(w)
+      await new Promise((r) => setTimeout(r, 12))
+    }
+    return { ...full, text: emitted }
+  }
 }

@@ -48,7 +48,26 @@ const api = {
     deriveStyle: (sample: string): Promise<AIResult> =>
       ipcRenderer.invoke('ai:deriveStyle', sample),
     assist: (kind: AssistKind, payload: string): Promise<AIResult> =>
-      ipcRenderer.invoke('ai:assist', kind, payload)
+      ipcRenderer.invoke('ai:assist', kind, payload),
+    /** US-29.2: generazione in streaming; abort() interrompe. */
+    generateStream: (
+      req: AIRequest,
+      onChunk: (text: string) => void
+    ): { result: Promise<AIResult>; abort: () => void } => {
+      const requestId = crypto.randomUUID()
+      const listener = (_e: unknown, msg: { requestId: string; text: string }): void => {
+        if (msg.requestId === requestId) onChunk(msg.text)
+      }
+      ipcRenderer.on('ai:stream', listener)
+      const result = ipcRenderer
+        .invoke('ai:generateStream', req, requestId)
+        .finally(() => ipcRenderer.removeListener('ai:stream', listener)) as Promise<AIResult>
+      return { result, abort: () => void ipcRenderer.invoke('ai:streamAbort', requestId) }
+    },
+    chat: (
+      projectId: string,
+      history: { role: 'user' | 'assistant'; text: string }[]
+    ): Promise<AIResult> => ipcRenderer.invoke('ai:chat', projectId, history)
   },
   settings: {
     get: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),

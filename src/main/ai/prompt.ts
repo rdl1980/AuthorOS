@@ -12,7 +12,9 @@ const OPERATION_INSTRUCTION: Record<AIRequest['operation'], string> = {
   description: 'Scrivi una descrizione vivida (luogo, personaggio o atmosfera).',
   expand: 'Espandi gli appunti forniti in prosa narrativa.',
   rewrite: 'Riscrivi il testo migliorandone stile e chiarezza, mantenendo il significato.',
-  tone: 'Riscrivi il testo adattandone il tono come richiesto.'
+  tone: 'Riscrivi il testo adattandone il tono come richiesto.',
+  continue:
+    'Continua la scena esattamente dal punto in cui il testo si interrompe, mantenendo tono, tempo verbale e punto di vista. Non riassumere e non ripetere il testo esistente.'
 }
 
 const BASE_SYSTEM =
@@ -131,6 +133,25 @@ export function composeAssist(kind: AssistKind, payload: string): Composed {
 const EDITOR_BASE =
   'Sei un editor narrativo esperto. Analizza il testo fornito e rispondi in italiano con un elenco puntato conciso. ' +
   "Non riscrivere l'intero testo e non aggiungere preamboli. "
+
+/** Chat di progetto (US-29.6): l'assistente conosce la panoramica del libro. */
+export function composeChat(
+  overview: string,
+  history: { role: 'user' | 'assistant'; text: string }[]
+): Composed {
+  const transcript = history
+    .map((m) => `${m.role === 'user' ? 'AUTORE' : 'ASSISTENTE'}: ${m.text}`)
+    .join('\n\n')
+  return {
+    system:
+      "Sei l'assistente editoriale personale dell'autore dentro AuthorOS. Conosci il progetto qui sotto. " +
+      'Rispondi in italiano, in modo concreto e conciso; quando utile cita capitoli, scene o personaggi per nome. ' +
+      "Non inventare contenuti del libro che non conosci: se un'informazione non è nel contesto, dillo.\n\n" +
+      `PROGETTO:\n${overview}`,
+    user: transcript || 'Ciao!',
+    maxTokens: 1500
+  }
+}
 
 /** Compone il prompt per derivare un profilo di stile da un testo campione (US-23.2). */
 export function composeStyleDerivation(sample: string): Composed {

@@ -21,6 +21,15 @@ export interface AIProvider {
   readonly model: string
   readonly mode: 'mock' | 'live'
   complete(input: CompletionInput): Promise<CompletionOutput>
+  /**
+   * Variante streaming (US-29.2): emette il testo man mano che arriva.
+   * Facoltativa: chi non la implementa ricade su complete() in un colpo solo.
+   */
+  streamComplete?(
+    input: CompletionInput,
+    onChunk: (text: string) => void,
+    signal?: AbortSignal
+  ): Promise<CompletionOutput>
 }
 
 export const estimateTokens = (s: string): number => Math.max(1, Math.ceil(s.length / 4))

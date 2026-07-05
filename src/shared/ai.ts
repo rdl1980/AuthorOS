@@ -9,6 +9,7 @@ export type AIOperation =
   | 'expand' // espandi bozza (US-3.4)
   | 'rewrite' // riscrivi sezione (US-3.5)
   | 'tone' // cambia tono (US-3.6)
+  | 'continue' // continua la scena dal cursore (US-29.5, realizza US-3.8)
 
 export interface AIRequest {
   operation: AIOperation
@@ -17,6 +18,12 @@ export interface AIRequest {
   styleProfile?: string
   /** Contesto narrativo opzionale (scena/capitolo corrente). */
   context?: string
+  /**
+   * US-29.1: se presenti, il gateway costruisce automaticamente il contesto dal
+   * codex (scena, personaggi citati, luogo, beat, voce) e lo inietta nel prompt.
+   */
+  projectId?: string
+  sceneId?: string
 }
 
 export interface AIUsage {
@@ -31,6 +38,23 @@ export interface AIResult {
   provider: string
   model: string
   usage: AIUsage
+  /** Costo reale della chiamata in USD (0 in mock) — US-29.7. */
+  costUsd?: number
+}
+
+/** Prezzi indicativi USD per milione di token (US-29.7). */
+export const MODEL_PRICES_USD: Record<string, { input: number; output: number }> = {
+  'claude-opus-4-8': { input: 5, output: 25 },
+  'claude-sonnet-4-6': { input: 3, output: 15 },
+  'claude-haiku-4-5': { input: 1, output: 5 },
+  'gpt-4o': { input: 2.5, output: 10 },
+  'gpt-4o-mini': { input: 0.15, output: 0.6 }
+}
+
+export function costUsd(model: string, promptTokens: number, completionTokens: number): number {
+  const p = MODEL_PRICES_USD[model]
+  if (!p) return 0
+  return (promptTokens * p.input + completionTokens * p.output) / 1_000_000
 }
 
 export interface AIStatus {

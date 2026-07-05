@@ -3,6 +3,7 @@ import { LibraryView } from './views/LibraryView'
 import { WritingWorkspaceView } from './views/WritingWorkspaceView'
 import { AiAssistantView } from './views/AiAssistantView'
 import { AuthorVoiceView } from './views/AuthorVoiceView'
+import { ChatView } from './views/ChatView'
 import { StructureView } from './views/StructureView'
 import { CharactersView } from './views/CharactersView'
 import { TimelineView } from './views/TimelineView'
@@ -47,6 +48,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: AiAssistantView
+  },
+  {
+    id: 'chat',
+    epic: 29,
+    title: 'Chat',
+    icon: '💬',
+    release: 'V1.5',
+    status: 'ready',
+    component: ChatView
   },
   {
     id: 'voice',

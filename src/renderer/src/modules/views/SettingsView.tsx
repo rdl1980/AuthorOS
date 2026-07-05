@@ -107,6 +107,30 @@ export function SettingsView(): JSX.Element {
             <span className="text-xs text-yellow">⚠ Inserisci una API key per usare l'AI reale</span>
           )}
         </div>
+
+        {/* Tetto di spesa mensile (US-29.7) */}
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+          <label className="flex items-center gap-2 text-muted">
+            Tetto di spesa mensile $
+            <input
+              className="w-24 rounded-lg border border-line bg-bg/60 px-2 py-1 text-right text-sm outline-none focus:border-cyan"
+              type="number"
+              min={0}
+              step="0.5"
+              placeholder="nessuno"
+              value={settings.monthlyBudgetUsd ?? ''}
+              onChange={(e) =>
+                patch({ monthlyBudgetUsd: e.target.value === '' ? null : Math.max(0, Number(e.target.value)) })
+              }
+            />
+          </label>
+          <span className="text-xs text-muted">
+            Speso questo mese: <strong>${settings.aiSpentUsd.toFixed(2)}</strong>
+            {settings.monthlyBudgetUsd !== null &&
+              settings.aiSpentUsd >= settings.monthlyBudgetUsd &&
+              ' — tetto raggiunto, chiamate reali bloccate'}
+          </span>
+        </div>
       </section>
 
       {/* API key */}

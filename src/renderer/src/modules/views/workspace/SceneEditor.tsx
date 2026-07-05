@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -7,6 +7,17 @@ import type { Scene, SceneStatus } from '@shared/domain'
 import { countWords } from '@shared/text'
 import { useWorkspace } from '../../../store/useWorkspace'
 import { usePrefs, EDITOR_FONTS, EDITOR_WIDTHS } from '../../../store/usePrefs'
+import { useUsageMeter } from '../../../store/useUsageMeter'
+
+/** Pannello AI inline: riscrittura della selezione (US-29.3) o continua (US-29.5). */
+interface AiPanel {
+  mode: 'rewrite' | 'continue'
+  from: number
+  to: number
+  instruction: string
+  text: string
+  running: boolean
+}
 
 interface Props {
   scene: Scene
@@ -174,6 +185,73 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
       .run()
   }
 
+  // --- AI inline (US-29.3 riscrivi selezione, US-29.5 continua) --------------
+  const [aiPanel, setAiPanel] = useState<AiPanel | null>(null)
+  const abortRef = useRef<(() => void) | null>(null)
+  const track = useUsageMeter((s) => s.track)
+
+  const openRewrite = (): void => {
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    if (from === to) return
+    setAiPanel({ mode: 'rewrite', from, to, instruction: '', text: '', running: false })
+  }
+
+  const openContinue = (): void => {
+    if (!editor) return
+    const end = editor.state.doc.content.size
+    setAiPanel({ mode: 'continue', from: end, to: end, instruction: '', text: '', running: false })
+  }
+
+  const runAi = async (): Promise<void> => {
+    if (!aiPanel || !editor) return
+    const selected = editor.state.doc.textBetween(aiPanel.from, aiPanel.to, ' ')
+    const fullMd = (editor.storage.markdown as { getMarkdown: () => string }).getMarkdown()
+    setAiPanel((p) => p && { ...p, text: '', running: true })
+    const req =
+      aiPanel.mode === 'rewrite'
+        ? {
+            operation: 'rewrite' as const,
+            prompt: `${aiPanel.instruction.trim() ? `Indicazione: ${aiPanel.instruction.trim()}.\n\n` : ''}${selected}`,
+            projectId: scene.projectId,
+            sceneId: scene.id
+          }
+        : {
+            operation: 'continue' as const,
+            prompt: fullMd || '(scena vuota: inizia tu)',
+            projectId: scene.projectId,
+            sceneId: scene.id
+          }
+    const { result, abort } = window.authoros.ai.generateStream(req, (chunk) =>
+      setAiPanel((p) => p && { ...p, text: p.text + chunk })
+    )
+    abortRef.current = abort
+    try {
+      const res = await result
+      track(res.usage)
+    } catch {
+      // interrotto o errore: si tiene il testo parziale già mostrato
+    } finally {
+      abortRef.current = null
+      setAiPanel((p) => p && { ...p, running: false })
+    }
+  }
+
+  const applyAi = (): void => {
+    if (!aiPanel || !editor || !aiPanel.text.trim()) return
+    if (aiPanel.mode === 'rewrite') {
+      editor.chain().focus().insertContentAt({ from: aiPanel.from, to: aiPanel.to }, aiPanel.text).run()
+    } else {
+      editor.chain().focus('end').insertContent(`\n\n${aiPanel.text}`).run()
+    }
+    setAiPanel(null)
+  }
+
+  const closeAi = (): void => {
+    abortRef.current?.()
+    setAiPanel(null)
+  }
+
   return (
     <div className="flex h-full flex-col">
       {recovered && (
@@ -243,12 +321,86 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
         >
           💬
         </button>
+        <button
+          title="Riscrivi la selezione con l'AI (US-29.3)"
+          onMouseDown={(ev) => ev.preventDefault()}
+          onClick={openRewrite}
+          className="min-w-[30px] rounded-md border border-line px-2 py-1 text-xs text-muted hover:border-cyan hover:text-cyan"
+        >
+          ✨
+        </button>
+        <button
+          title="Continua la scena dal fondo (US-29.5)"
+          onMouseDown={(ev) => ev.preventDefault()}
+          onClick={openContinue}
+          className="min-w-[30px] rounded-md border border-line px-2 py-1 text-xs text-muted hover:border-cyan hover:text-cyan"
+        >
+          ▶
+        </button>
         <span className="ml-auto flex items-center gap-3 text-xs text-muted">
           <span>{words} parole</span>
           <span>·</span>
           <span>{saving ? 'Salvataggio…' : 'Salvato'}</span>
         </span>
       </div>
+
+      {/* Pannello AI inline (US-29.3 / US-29.5) */}
+      {aiPanel && (
+        <div className="mb-2 rounded-xl border border-cyan/40 bg-cyan/5 p-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-cyan">
+              {aiPanel.mode === 'rewrite' ? '✨ Riscrivi selezione' : '▶ Continua la scena'}
+            </span>
+            {aiPanel.mode === 'rewrite' && (
+              <input
+                className="min-w-0 flex-1 rounded-md border border-line bg-bg/60 px-2 py-1 text-xs outline-none focus:border-cyan"
+                placeholder="Indicazione (opz.): più teso, più breve, in prima persona…"
+                value={aiPanel.instruction}
+                onChange={(e) => setAiPanel((p) => p && { ...p, instruction: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && runAi()}
+              />
+            )}
+            {!aiPanel.running ? (
+              <button
+                className="rounded-md bg-cyan px-2 py-1 text-xs font-semibold text-bg hover:opacity-90"
+                onClick={runAi}
+              >
+                {aiPanel.text ? 'Rigenera' : 'Genera'}
+              </button>
+            ) : (
+              <button
+                className="rounded-md border border-line px-2 py-1 text-xs text-yellow"
+                onClick={() => abortRef.current?.()}
+              >
+                ⏹ Ferma
+              </button>
+            )}
+            <button className="rounded-md border border-line px-2 py-1 text-xs text-muted" onClick={closeAi}>
+              ✕
+            </button>
+          </div>
+          {(aiPanel.text || aiPanel.running) && (
+            <>
+              <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap rounded-lg bg-bg/40 p-2 text-sm text-ink/90">
+                {aiPanel.text}
+                {aiPanel.running && <span className="animate-pulse text-cyan">▌</span>}
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  className="rounded-md bg-green/90 px-3 py-1 text-xs font-semibold text-bg hover:bg-green disabled:opacity-50"
+                  onClick={applyAi}
+                  disabled={aiPanel.running || !aiPanel.text.trim()}
+                >
+                  {aiPanel.mode === 'rewrite' ? 'Applica al testo' : 'Aggiungi alla scena'}
+                </button>
+                <button className="rounded-md border border-line px-3 py-1 text-xs text-muted" onClick={closeAi}>
+                  Scarta
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div
         className={`min-h-0 flex-1 overflow-y-auto rounded-lg border border-line p-4 focus-within:border-cyan ${
