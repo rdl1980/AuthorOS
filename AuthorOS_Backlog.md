@@ -34,6 +34,11 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 
 ## Revisioni Backlog
 
+### v2.0 — 2026-06-10 · «Top Tier»
+- **Nuova direzione**: elevare AuthorOS da MVP completo a **strumento di fascia alta** per scrittori (benchmark: Scrivener, Ulysses, Sudowrite, Atticus, Dabble). Introdotta la **Roadmap Top-Tier a 3 ondate** e le nuove **Epiche 26–32**.
+- **Sprint 0 (bug noti dal collaudo)**: US-21.6 (capitoli fittizi/duplicati all'import) e US-21.7 (numerazione scene "Scena x.y") — priorità assoluta.
+- US-3.7 e US-3.8 vengono realizzate dalle US-29.4/29.5 (AI Contestuale).
+
 ### v1.2 — 2026-06-10
 - **Feedback dal collaudo utente (v0.1.0):** editor scene ora **WYSIWYG** (TipTap) — il Markdown resta il formato di salvataggio ma l'autore scrive testo formattato senza sintassi (reinterpretazione corretta di US-2.4); "Apri" dalla Libreria porta nel Workspace e l'ultimo progetto aperto viene ripristinato all'avvio.
 - **Nuova US-21.5:** associazione automatica dei capitoli importati ai beat del framework selezionato (autowire import→struttura).
@@ -48,10 +53,10 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 ## Stato Implementazione
 
 > Legenda: ✅ completata · 🔄 in corso · ⬜ da fare. Nel backlog visuale le voci ✅ sono **barrate**.
-> Aggiornato a: **Fase 12** (Plot Intelligence). 🏁 MVP must-have completo; in corso gli Should-have V1.
+> Aggiornato a: **v0.2.0 rilasciata** (installer Windows). 🏁 MVP must-have + 4/5 Should-have completi. ⚠️ Due bug di import noti dal collaudo (US-21.6/21.7), non ancora corretti.
 
 - **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-21.5, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3, US-7.1, US-7.2, US-7.3, US-8.1, US-8.2, US-8.3, US-8.4, US-24.1, US-24.2, US-24.3, US-25.1, US-25.2, US-25.3
-- **In corso (🔄):** US-14.1, US-14.2, US-14.4 (Marketing base: sinossi, quarta, pitch) — ultima fase Should-have V1.
+- **In corso (🔄):** US-21.6, US-21.7 (Sprint 0 — bug import). A seguire: Ondata 1 della Roadmap Top-Tier (vedi sotto).
 
 > Nota: US-7.4 (cronologie storiche) è in larga parte coperta dal Timeline Engine (eventi con etichette temporali libere); resta aperta come evoluzione dedicata.
 
@@ -100,6 +105,37 @@ Focus: ecosistema completo per autore.
 - Co-writing
 - Publishing assistant avanzato
 - Analytics vendite e marketing
+
+---
+
+# Roadmap Top-Tier (v2.0) — «da MVP a strumento di fascia alta»
+
+> Obiettivo: rendere AuthorOS competitivo con Scrivener (organizzazione), Ulysses (esperienza di scrittura), Sudowrite/NovelCrafter (AI che conosce il libro) e Atticus (export professionale) — restando local-first e con l'autore sempre al comando.
+
+## Ondata 1 — «Affidabile come una macchina da scrivere» (V1.5)
+
+La fiducia prima di tutto: dati al sicuro, scrittura senza attriti, numeri che motivano.
+
+- **Sprint 0**: bug import (US-21.6, US-21.7)
+- Epic 30 — Affidabilità & Portabilità dati
+- Epic 26 — Editor Pro & Flusso di scrittura
+- Epic 27 — Statistiche & Obiettivi
+- Distribuzione minima: icona app + auto-update (US-32.1, US-32.2)
+
+## Ondata 2 — «L'AI che ha letto il tuo libro» (V1.5)
+
+Il differenziatore: l'AI smette di essere un prompt generico e diventa un editor che conosce personaggi, mondo, struttura e voce.
+
+- Epic 29 — AI Contestuale (streaming, contesto automatico, riscrittura inline, varianti, chat di progetto)
+- Epic 20 — Author Copilot (US-20.1…20.4: da idea a mappa completa del libro)
+- Epic 28 — Scene Board & Metadati narrativi (corkboard, POV, personaggi/luoghi per scena)
+
+## Ondata 3 — «Dalla bozza al mercato» (V1.5 → V2)
+
+- Epic 31 — Export Professionale (manuscript standard, front matter, EPUB rifinito)
+- Epic 14 — Marketing base (sinossi, quarta, pitch)
+- Epic 11 — Reader Simulator (anticipata da V2 come differenziatore)
+- Distribuzione completa: code signing, i18n inglese, build macOS (US-32.3…32.5)
 
 ---
 
@@ -161,6 +197,8 @@ Accelerare la scrittura senza togliere all'autore il controllo creativo.
 | US-3.7 | Come autore voglio generare più varianti, così da scegliere la versione migliore. | Should | V1 |
 | US-3.8 | Come autore voglio completare automaticamente una scena, così da superare il blocco dello scrittore. | Should | V1 |
 | US-3.9 | Come autore voglio accettare, modificare o rifiutare ogni output AI, così da mantenere controllo manuale. *(Principio trasversale — vedi Definition of Done: implementato dall'"AI Interaction Shell" comune a tutti i moduli AI.)* | Must | V1 |
+
+> **Nota v2.0:** US-3.7 (varianti) e US-3.8 (autocompletamento scena) sono realizzate da **US-29.4** e **US-29.5** dell'Epic 29 — AI Contestuale.
 
 ---
 
@@ -531,6 +569,8 @@ Permettere all'autore di portare in AuthorOS manoscritti e materiali esistenti.
 | US-21.3 | Come autore voglio che l'import riconosca capitoli e scene, così da ottenere subito una struttura navigabile. | Should | V1 |
 | US-21.4 | Come autore voglio importare schede personaggi/note da CSV o testo, così da popolare rapidamente la Character Bible. | Could | V2 |
 | US-21.5 | Come autore voglio che i capitoli importati vengano associati automaticamente ai beat del framework selezionato, così da avere subito la mappa strutturale del manoscritto. | Should | V1 |
+| US-21.6 | Come autore voglio che l'import non crei capitoli fittizi o duplicati: il testo prima del primo capitolo diventa "Premessa" e i capitoli segnaposto vuoti preesistenti vengono rimossi. *(bug dal collaudo)* | Must | V1 |
+| US-21.7 | Come autore voglio che le scene senza titolo importate siano numerate "Scena x.y" (x = capitolo, y = progressivo), così da orientarmi subito nel manoscritto. *(bug dal collaudo)* | Must | V1 |
 
 ---
 
@@ -595,6 +635,127 @@ Accompagnare l'utente al primo avvio ed evitare il foglio bianco.
 | US-25.1 | Come nuovo utente voglio un onboarding guidato, così da capire subito cosa posso fare. | Should | V1 |
 | US-25.2 | Come nuovo utente voglio creare il primo progetto da un template di genere, così da partire senza foglio bianco. | Should | V1 |
 | US-25.3 | Come nuovo utente voglio un progetto demo precaricato, così da esplorare le funzioni. | Could | V1 |
+
+---
+
+## EPIC 26 — Editor Pro & Flusso di scrittura
+
+### Obiettivo
+Portare l'esperienza di scrittura al livello di Ulysses/Scrivener: zero attriti, pieno controllo.
+
+### User Stories
+
+| ID | User Story | Priorità | Release |
+|---|---|---:|---|
+| US-26.1 | Come autore voglio cercare e sostituire testo nella scena e in tutto il progetto, così da fare revisioni rapide. | Must | V1.5 |
+| US-26.2 | Come autore voglio assegnare uno stato a ogni scena (bozza, revisione, finale) visibile nell'albero, così da sapere dove sono. | Must | V1.5 |
+| US-26.3 | Come autore voglio la typewriter mode (riga corrente sempre centrata) nel focus, così da scrivere senza distrazioni. | Should | V1.5 |
+| US-26.4 | Come autore voglio sprint di scrittura con timer e conteggio parole di sessione, così da mantenere il ritmo. | Should | V1.5 |
+| US-26.5 | Come autore voglio annotazioni inline non stampabili nel testo, così da lasciarmi promemoria senza sporcare il manoscritto. | Should | V1.5 |
+| US-26.6 | Come autore voglio scegliere font, dimensione, larghezza colonna e tema chiaro/scuro dell'editor, così da scrivere comodo. | Should | V1.5 |
+| US-26.7 | Come autore voglio una command palette (Ctrl+K) per navigare e agire da tastiera, così da non staccare le mani. | Could | V1.5 |
+
+---
+
+## EPIC 27 — Statistiche & Obiettivi di scrittura
+
+### Obiettivo
+Trasformare la costanza in un gioco: numeri chiari, obiettivi, momentum.
+
+### User Stories
+
+| ID | User Story | Priorità | Release |
+|---|---|---:|---|
+| US-27.1 | Come autore voglio lo storico delle parole scritte per giorno, così da vedere la mia costanza. | Must | V1.5 |
+| US-27.2 | Come autore voglio un obiettivo giornaliero con streak, così da mantenere l'abitudine. | Should | V1.5 |
+| US-27.3 | Come autore voglio una deadline di progetto con proiezione del ritmo necessario, così da sapere se sono in tabella. | Should | V1.5 |
+| US-27.4 | Come autore voglio una dashboard progressi con grafici (giorni, capitoli, sessioni), così da avere il quadro. | Should | V1.5 |
+
+---
+
+## EPIC 28 — Scene Board & Metadati narrativi
+
+### Obiettivo
+Dare a ogni scena identità e collegamenti reali: il manoscritto diventa navigabile come una mappa.
+
+### User Stories
+
+| ID | User Story | Priorità | Release |
+|---|---|---:|---|
+| US-28.1 | Come autore voglio metadati per scena — POV, luogo (dal Mondo) e personaggi presenti (dalla Bible) — così da collegare davvero manoscritto e codex. | Must | V1.5 |
+| US-28.2 | Come autore voglio una corkboard a schede con sinossi e drag&drop, così da ristrutturare il libro a colpo d'occhio. | Should | V1.5 |
+| US-28.3 | Come autore voglio una outline view compatta (scene + metadati + stati), così da rivedere la struttura senza aprire le scene. | Should | V1.5 |
+| US-28.4 | Come autore voglio filtrare il manoscritto per personaggio, luogo o stato, così da lavorare per filoni. | Should | V1.5 |
+| US-28.5 | Come sistema voglio che Plot Intelligence usi i metadati (personaggi presenti reali, non match testuale), così da dare segnalazioni precise. | Should | V1.5 |
+
+---
+
+## EPIC 29 — AI Contestuale
+
+### Obiettivo
+L'AI che ha letto il tuo libro: ogni generazione conosce scena, personaggi, mondo, struttura e voce. Il differenziatore di fascia alta.
+
+### User Stories
+
+| ID | User Story | Priorità | Release |
+|---|---|---:|---|
+| US-29.1 | Come autore voglio che l'AI riceva automaticamente il contesto (scena corrente, schede dei personaggi citati, luogo, beat), così da ottenere testo coerente col libro. | Must | V1.5 |
+| US-29.2 | Come autore voglio vedere l'output AI in streaming, così da valutarlo mentre nasce e interromperlo. | Must | V1.5 |
+| US-29.3 | Come autore voglio selezionare un passaggio nell'editor e chiederne la riscrittura lì (con anteprima accetta/rifiuta), così da revisionare senza copia-incolla. | Must | V1.5 |
+| US-29.4 | Come autore voglio generare 2–3 varianti confrontabili fianco a fianco, così da scegliere la migliore. *(realizza US-3.7)* | Should | V1.5 |
+| US-29.5 | Come autore voglio "continua a scrivere" dal punto del cursore, così da superare il blocco. *(realizza US-3.8)* | Should | V1.5 |
+| US-29.6 | Come autore voglio una chat laterale che conosce il progetto, così da ragionare sul libro senza uscire dall'app. | Should | V1.5 |
+| US-29.7 | Come autore voglio la stima del costo prima di ogni chiamata e un tetto di spesa mensile, così da usare l'AI senza sorprese. | Should | V1.5 |
+
+---
+
+## EPIC 30 — Affidabilità & Portabilità dati
+
+### Obiettivo
+Il manoscritto è sacro: mai perso, mai prigioniero dell'app.
+
+### User Stories
+
+| ID | User Story | Priorità | Release |
+|---|---|---:|---|
+| US-30.1 | Come autore voglio backup automatici in una cartella a mia scelta (anche Dropbox/Drive/OneDrive), così da avere copie fuori dal computer. | Must | V1.5 |
+| US-30.2 | Come autore voglio esportare/importare l'intero progetto come singolo file (.authoros), così da spostarlo o condividerlo. | Must | V1.5 |
+| US-30.3 | Come sistema voglio migrazioni di schema versionate, così che gli aggiornamenti dell'app non tocchino mai i dati esistenti. | Must | V1.5 |
+| US-30.4 | Come autore voglio il recupero della bozza non salvata dopo un crash, così da non perdere neanche un paragrafo. | Should | V1.5 |
+
+---
+
+## EPIC 31 — Export Professionale
+
+### Obiettivo
+Da bozza a documento da inviare o pubblicare, senza passare da altri tool (benchmark: Atticus).
+
+### User Stories
+
+| ID | User Story | Priorità | Release |
+|---|---|---:|---|
+| US-31.1 | Come autore voglio l'export DOCX in formato manoscritto standard (Shunn: doppia interlinea, rientri, intestazioni), così da inviarlo ad agenti ed editor. | Must | V1.5 |
+| US-31.2 | Come autore voglio front matter configurabile (frontespizio, copyright, dedica), così da avere un libro completo. | Should | V1.5 |
+| US-31.3 | Come autore voglio EPUB con copertina e indice rifinito, così da pubblicare direttamente. | Should | V1.5 |
+| US-31.4 | Come autore voglio esportare solo capitoli selezionati, così da condividere estratti. | Should | V1.5 |
+| US-31.5 | Come autore voglio impostazioni di impaginazione PDF (formato, margini, font), così da controllare la stampa. | Could | V1.5 |
+
+---
+
+## EPIC 32 — Distribuzione & Fiducia
+
+### Obiettivo
+Un'app che si installa, si aggiorna e si presenta come un prodotto professionale.
+
+### User Stories
+
+| ID | User Story | Priorità | Release |
+|---|---|---:|---|
+| US-32.1 | Come utente voglio un'icona e un'identità visiva dell'app, così da riconoscerla come prodotto curato. | Must | V1.5 |
+| US-32.2 | Come utente voglio aggiornamenti automatici (GitHub Releases), così da avere sempre l'ultima versione. | Must | V1.5 |
+| US-32.3 | Come utente voglio un installer firmato senza avvisi SmartScreen, così da fidarmi dell'installazione. | Should | V1.5 |
+| US-32.4 | Come utente voglio l'interfaccia anche in inglese, così da aprire il prodotto al mercato internazionale. | Should | V1.5 |
+| US-32.5 | Come utente voglio la versione macOS, così da scrivere sul mio Mac. | Could | V2 |
 
 ---
 

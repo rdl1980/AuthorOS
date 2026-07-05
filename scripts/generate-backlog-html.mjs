@@ -217,7 +217,7 @@ function parseEpics(text) {
     const objMatch = body.match(/###\s+Obiettivo\s*\n+([^\n]+)/);
     const objective = objMatch ? objMatch[1].trim() : '';
 
-    const usRe = /^\|\s*(US-[\d.]+)\s*\|(.+?)\|\s*(Must|Should|Could)\s*\|\s*(V\d)\s*\|/gm;
+    const usRe = /^\|\s*(US-[\d.]+)\s*\|(.+?)\|\s*(Must|Should|Could)\s*\|\s*(V[\d.]+)\s*\|/gm;
     const stories = [];
     let topPrio = 1;
     const releases = new Set();
