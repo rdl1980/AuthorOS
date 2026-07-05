@@ -3,6 +3,7 @@ import type { AppSettings, AIProviderId, Language } from '@shared/settings'
 import { MODELS } from '@shared/settings'
 import { useOnboarding } from '../../store/useOnboarding'
 import { usePrefs } from '../../store/usePrefs'
+import { useLang } from '../../lib/i18n'
 
 /** Modulo Settings & AI Config (Epic 22). API key sicura, provider/modello, modalità, lingua. */
 export function SettingsView(): JSX.Element {
@@ -23,6 +24,7 @@ export function SettingsView(): JSX.Element {
     const updated = await window.authoros.settings.update(p)
     setSettings(updated)
     usePrefs.getState().init(updated) // tiene sincronizzate le preferenze editor
+    useLang.getState().setLang(updated.language) // sidebar/palette reattive (US-32.4)
     setSaving(false)
   }
 

@@ -4,6 +4,7 @@ import { modules } from '../modules/registry'
 import { useLibrary } from '../store/useLibrary'
 import { useNav } from '../store/useNav'
 import { useWorkspace } from '../store/useWorkspace'
+import { moduleTitle, useLang } from '../lib/i18n'
 
 interface Item {
   key: string
@@ -67,7 +68,7 @@ export function CommandPalette(): JSX.Element | null {
     ...modules.map((m) => ({
       key: `mod:${m.id}`,
       icon: m.icon,
-      label: m.title,
+      label: moduleTitle(m.id, m.title, useLang.getState().lang),
       hint: 'modulo',
       run: () => {
         goTo(m.id)

@@ -53,10 +53,13 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 ## Stato Implementazione
 
 > Legenda: ✅ completata · 🔄 in corso · ⬜ da fare. Nel backlog visuale le voci ✅ sono **barrate**.
-> Aggiornato a: **v0.2.0 rilasciata** (installer Windows). 🏁 MVP must-have + 4/5 Should-have completi. Sprint 0 completato (bug import corretti).
+> Aggiornato a: **Ondate 1-3 Top-Tier eseguite** (base v0.2.0 + Epic 26/27/29/30/20/28/31/14/11). Prossimo installer on demand.
 
-- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.7, US-3.8, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-21.5, US-21.6, US-21.7, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3, US-7.1, US-7.2, US-7.3, US-8.1, US-8.2, US-8.3, US-8.4, US-24.1, US-24.2, US-24.3, US-25.1, US-25.2, US-25.3, US-26.1, US-26.2, US-26.3, US-26.4, US-26.5, US-26.6, US-26.7, US-27.1, US-27.2, US-27.3, US-27.4, US-29.1, US-29.2, US-29.3, US-29.4, US-29.5, US-29.6, US-29.7, US-30.1, US-30.2, US-30.3, US-30.4, US-32.1, US-32.2, US-20.1, US-20.2, US-20.3, US-20.4, US-28.1, US-28.2, US-28.3, US-28.4, US-28.5
-- **In corso (🔄):** Ondata 3 — Epic 31 Export Pro, Epic 14 Marketing, Epic 11 Reader Simulator, US-32.3…32.5.
+- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.7, US-3.8, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-21.5, US-21.6, US-21.7, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3, US-7.1, US-7.2, US-7.3, US-8.1, US-8.2, US-8.3, US-8.4, US-24.1, US-24.2, US-24.3, US-25.1, US-25.2, US-25.3, US-26.1, US-26.2, US-26.3, US-26.4, US-26.5, US-26.6, US-26.7, US-27.1, US-27.2, US-27.3, US-27.4, US-29.1, US-29.2, US-29.3, US-29.4, US-29.5, US-29.6, US-29.7, US-30.1, US-30.2, US-30.3, US-30.4, US-32.1, US-32.2, US-20.1, US-20.2, US-20.3, US-20.4, US-28.1, US-28.2, US-28.3, US-28.4, US-28.5, US-31.1, US-31.2, US-31.3, US-31.4, US-14.1, US-14.2, US-14.4, US-11.1, US-11.2, US-11.3, US-11.4, US-11.5
+- **In corso (🔄):** US-32.4 (i18n: infrastruttura lingua + shell in inglese; le viste interne seguiranno).
+
+> US-32.3 (code signing): configurazione pronta in electron-builder.yml — servono solo il certificato e le variabili CSC_LINK/CSC_KEY_PASSWORD al momento della build.
+> US-32.5 (macOS): configurazione `mac`/`dmg` pronta — la build va lanciata su un Mac con `npm run dist -- --mac`.
 
 > Nota: US-7.4 (cronologie storiche) è in larga parte coperta dal Timeline Engine (eventi con etichette temporali libere); resta aperta come evoluzione dedicata.
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { ProjectStats } from '@shared/domain'
+import type { Chapter, ProjectStats } from '@shared/domain'
+import type { ExportOptions } from '@shared/publishing'
 import { useLibrary } from '../../store/useLibrary'
 
 type Action = 'docx' | 'pdf' | 'epub' | 'import'
@@ -10,13 +11,25 @@ export function PublishingView(): JSX.Element {
   const [busy, setBusy] = useState<Action | null>(null)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
+  // Export Pro (Epic 31)
+  const [proOpen, setProOpen] = useState(false)
+  const [template, setTemplate] = useState<'standard' | 'shunn'>('standard')
+  const [chapters, setChapters] = useState<Chapter[]>([])
+  const [excluded, setExcluded] = useState<Set<string>>(new Set())
+  const [author, setAuthor] = useState('')
+  const [copyright, setCopyright] = useState('')
+  const [dedication, setDedication] = useState('')
+  const [withCover, setWithCover] = useState(false)
+
   const reloadStats = async (): Promise<void> => {
     if (!project) return
     setStats(await window.authoros.manuscript.stats(project.id))
+    setChapters(await window.authoros.manuscript.chapters(project.id))
   }
 
   useEffect(() => {
     setMessage(null)
+    setExcluded(new Set())
     void reloadStats()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.id])
@@ -33,6 +46,25 @@ export function PublishingView(): JSX.Element {
     )
   }
 
+  const buildOptions = (action: Exclude<Action, 'import'>): ExportOptions | undefined => {
+    if (!proOpen) return undefined
+    const included = chapters.filter((c) => !excluded.has(c.id)).map((c) => c.id)
+    const fm =
+      author.trim() || copyright.trim() || dedication.trim()
+        ? {
+            author: author.trim() || undefined,
+            copyright: copyright.trim() || undefined,
+            dedication: dedication.trim() || undefined
+          }
+        : undefined
+    return {
+      template: action === 'docx' ? template : undefined,
+      chapterIds: excluded.size > 0 ? included : undefined,
+      frontMatter: fm,
+      pickCover: action === 'epub' ? withCover : undefined
+    }
+  }
+
   const runExport = async (action: Exclude<Action, 'import'>): Promise<void> => {
     setBusy(action)
     setMessage(null)
@@ -43,7 +75,7 @@ export function PublishingView(): JSX.Element {
           : action === 'pdf'
             ? window.authoros.publishing.exportPdf
             : window.authoros.publishing.exportEpub
-      const res = await fn(project.id)
+      const res = await fn(project.id, buildOptions(action))
       if (res.ok) setMessage({ ok: true, text: `Esportato: ${res.path}` })
       else if (res.error !== 'annullato') setMessage({ ok: false, text: `Errore: ${res.error}` })
     } finally {
@@ -123,6 +155,99 @@ export function PublishingView(): JSX.Element {
           <p className="mt-2 text-xs text-muted">
             Il manoscritto è vuoto: scrivi (o importa) qualcosa prima di esportare.
           </p>
+        )}
+
+        {/* Export Pro (Epic 31) */}
+        <button
+          className={`mt-3 rounded-lg border px-3 py-1.5 text-xs ${proOpen ? 'border-cyan bg-cyan/15 text-cyan' : 'border-line hover:border-cyan'}`}
+          onClick={() => setProOpen((v) => !v)}
+        >
+          {proOpen ? '▾' : '▸'} Opzioni professionali (formato manoscritto, front matter, estratti)
+        </button>
+        {proOpen && (
+          <div className="mt-2 space-y-3 rounded-2xl border border-line bg-panel/50 p-4 text-sm">
+            {/* US-31.1: template DOCX */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted">Formato DOCX:</span>
+              <label className="flex items-center gap-1 text-xs">
+                <input
+                  type="radio"
+                  checked={template === 'standard'}
+                  onChange={() => setTemplate('standard')}
+                />
+                Libro (Georgia, corsivi)
+              </label>
+              <label className="flex items-center gap-1 text-xs">
+                <input
+                  type="radio"
+                  checked={template === 'shunn'}
+                  onChange={() => setTemplate('shunn')}
+                />
+                Manoscritto standard — Shunn (Times 12, doppia interlinea, per agenti/editor)
+              </label>
+            </div>
+
+            {/* US-31.2: front matter */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <input
+                className="rounded-lg border border-line bg-bg/60 px-3 py-1.5 text-xs outline-none focus:border-cyan"
+                placeholder="Autore (frontespizio)"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+              />
+              <input
+                className="rounded-lg border border-line bg-bg/60 px-3 py-1.5 text-xs outline-none focus:border-cyan"
+                placeholder="Copyright, es. © 2026 Nome"
+                value={copyright}
+                onChange={(e) => setCopyright(e.target.value)}
+              />
+              <input
+                className="rounded-lg border border-line bg-bg/60 px-3 py-1.5 text-xs outline-none focus:border-cyan"
+                placeholder="Dedica"
+                value={dedication}
+                onChange={(e) => setDedication(e.target.value)}
+              />
+            </div>
+
+            {/* US-31.3: copertina EPUB */}
+            <label className="flex items-center gap-2 text-xs text-muted">
+              <input
+                type="checkbox"
+                checked={withCover}
+                onChange={(e) => setWithCover(e.target.checked)}
+              />
+              EPUB: scegli un&apos;immagine di copertina (JPG/PNG) prima dell&apos;export
+            </label>
+
+            {/* US-31.4: capitoli selezionati */}
+            {chapters.length > 0 && (
+              <div>
+                <p className="mb-1 text-xs text-muted">
+                  Capitoli da esportare ({chapters.length - excluded.size}/{chapters.length}) — togli
+                  la spunta per condividere solo un estratto:
+                </p>
+                <div className="flex max-h-32 flex-wrap gap-x-4 gap-y-1 overflow-y-auto">
+                  {chapters.map((c) => (
+                    <label key={c.id} className="flex items-center gap-1 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={!excluded.has(c.id)}
+                        onChange={(e) =>
+                          setExcluded((prev) => {
+                            const next = new Set(prev)
+                            if (e.target.checked) next.delete(c.id)
+                            else next.add(c.id)
+                            return next
+                          })
+                        }
+                      />
+                      {c.title}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </section>
 

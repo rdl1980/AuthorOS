@@ -4,11 +4,11 @@ import { basename, extname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import mammoth from 'mammoth'
 import { autowireToBeats, htmlToMarkdown, parseManuscript } from '@shared/import'
-import type { ExportResult, ImportResult } from '@shared/publishing'
+import type { ExportOptions, ExportResult, ImportResult } from '@shared/publishing'
 import type { ManuscriptRepository, ProjectRepository, StructureRepository } from '../data/types'
 import { assembleModel, modelToHtml, type ManuscriptModel } from './builder'
-import { buildDocx } from './docx'
-import { buildEpub } from './epub'
+import { buildDocx, buildDocxShunn } from './docx'
+import { buildEpub, type EpubCover } from './epub'
 
 const sanitize = (s: string): string => s.replace(/[<>:"/\\|?*]+/g, '').trim() || 'manoscritto'
 
@@ -42,13 +42,14 @@ export class PublishingService {
     return removed
   }
 
-  private model(projectId: string): ManuscriptModel | null {
+  private model(projectId: string, opts: ExportOptions = {}): ManuscriptModel | null {
     const project = this.projects.get(projectId)
     if (!project) return null
     return assembleModel(
       project,
       this.manuscript.listChapters(projectId),
-      this.manuscript.listScenes(projectId)
+      this.manuscript.listScenes(projectId),
+      { chapterIds: opts.chapterIds, frontMatter: opts.frontMatter }
     )
   }
 
@@ -67,29 +68,53 @@ export class PublishingService {
     return { ok: true, path: filePath }
   }
 
-  async exportDocx(projectId: string): Promise<ExportResult> {
-    const model = this.model(projectId)
+  async exportDocx(projectId: string, opts: ExportOptions = {}): Promise<ExportResult> {
+    const model = this.model(projectId, opts)
     if (!model) return { ok: false, error: 'progetto non trovato' }
     try {
-      return await this.save(model.title, 'docx', 'Documento Word', await buildDocx(model))
+      // US-31.1: template Shunn per l'invio ad agenti/editor.
+      const data =
+        opts.template === 'shunn' ? await buildDocxShunn(model) : await buildDocx(model)
+      return await this.save(model.title, 'docx', 'Documento Word', data)
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) }
     }
   }
 
-  async exportEpub(projectId: string): Promise<ExportResult> {
-    const model = this.model(projectId)
+  async exportEpub(projectId: string, opts: ExportOptions = {}): Promise<ExportResult> {
+    const model = this.model(projectId, opts)
     if (!model) return { ok: false, error: 'progetto non trovato' }
     try {
-      return await this.save(model.title, 'epub', 'EPUB', await buildEpub(model, randomUUID()))
+      // US-31.3: copertina opzionale scelta dall'autore.
+      let cover: EpubCover | undefined
+      if (opts.pickCover) {
+        const { canceled, filePaths } = await dialog.showOpenDialog({
+          title: 'Scegli la copertina',
+          properties: ['openFile'],
+          filters: [{ name: 'Immagini', extensions: ['jpg', 'jpeg', 'png'] }]
+        })
+        if (!canceled && filePaths[0]) {
+          cover = {
+            data: readFileSync(filePaths[0]),
+            mediaType:
+              extname(filePaths[0]).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg'
+          }
+        }
+      }
+      return await this.save(
+        model.title,
+        'epub',
+        'EPUB',
+        await buildEpub(model, randomUUID(), cover)
+      )
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) }
     }
   }
 
   /** PDF: HTML del manoscritto stampato da una finestra nascosta (US-16.3). */
-  async exportPdf(projectId: string): Promise<ExportResult> {
-    const model = this.model(projectId)
+  async exportPdf(projectId: string, opts: ExportOptions = {}): Promise<ExportResult> {
+    const model = this.model(projectId, opts)
     if (!model) return { ok: false, error: 'progetto non trovato' }
     const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true } })
     try {

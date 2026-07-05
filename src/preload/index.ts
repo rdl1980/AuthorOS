@@ -37,7 +37,7 @@ import type {
 } from '@shared/domain'
 import type { Blueprint } from '@shared/copilot'
 import type { AIProviderId, AppSettings, SettingsUpdate } from '@shared/settings'
-import type { ExportResult, ImportResult } from '@shared/publishing'
+import type { ExportOptions, ExportResult, ImportResult } from '@shared/publishing'
 import type { SearchResult, SnapshotMeta } from '@shared/search'
 import type { PlotReport } from '@shared/plot'
 
@@ -198,12 +198,12 @@ const api = {
       ipcRenderer.invoke('snap:remove', projectId, file)
   },
   publishing: {
-    exportDocx: (projectId: string): Promise<ExportResult> =>
-      ipcRenderer.invoke('pub:exportDocx', projectId),
-    exportPdf: (projectId: string): Promise<ExportResult> =>
-      ipcRenderer.invoke('pub:exportPdf', projectId),
-    exportEpub: (projectId: string): Promise<ExportResult> =>
-      ipcRenderer.invoke('pub:exportEpub', projectId),
+    exportDocx: (projectId: string, opts?: ExportOptions): Promise<ExportResult> =>
+      ipcRenderer.invoke('pub:exportDocx', projectId, opts),
+    exportPdf: (projectId: string, opts?: ExportOptions): Promise<ExportResult> =>
+      ipcRenderer.invoke('pub:exportPdf', projectId, opts),
+    exportEpub: (projectId: string, opts?: ExportOptions): Promise<ExportResult> =>
+      ipcRenderer.invoke('pub:exportEpub', projectId, opts),
     importFile: (projectId: string): Promise<ImportResult> =>
       ipcRenderer.invoke('pub:import', projectId)
   },

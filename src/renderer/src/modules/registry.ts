@@ -13,6 +13,8 @@ import { AiEditorView } from './views/AiEditorView'
 import { PlotView } from './views/PlotView'
 import { StatsView } from './views/StatsView'
 import { PublishingView } from './views/PublishingView'
+import { MarketingView } from './views/MarketingView'
+import { ReaderSimView } from './views/ReaderSimView'
 import { SearchSnapshotsView } from './views/SearchSnapshotsView'
 import { SettingsView } from './views/SettingsView'
 
@@ -141,6 +143,15 @@ export const modules: AppModule[] = [
     component: StatsView
   },
   {
+    id: 'readers',
+    epic: 11,
+    title: 'Lettori',
+    icon: '🪞',
+    release: 'V1.5',
+    status: 'ready',
+    component: ReaderSimView
+  },
+  {
     id: 'publish',
     epic: 16,
     title: 'Publishing',
@@ -148,6 +159,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: PublishingView
+  },
+  {
+    id: 'marketing',
+    epic: 14,
+    title: 'Marketing',
+    icon: '📣',
+    release: 'V1.5',
+    status: 'ready',
+    component: MarketingView
   },
   {
     id: 'archive',

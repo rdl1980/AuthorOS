@@ -71,6 +71,8 @@ export interface AIStatus {
  * - editor-*: revisione del testo per l'AI Editor (Epic 10)
  * - plot-holes / plot-scene-audit: analisi della trama (Epic 8)
  * - copilot-*: Author Copilot, dall'idea alla mappa del romanzo (Epic 20)
+ * - marketing-*: materiali promozionali (Epic 14)
+ * - reader-*: Reader Simulator, feedback da personas (Epic 11)
  */
 export type AssistKind =
   | 'character-profile'
@@ -84,3 +86,11 @@ export type AssistKind =
   | 'plot-scene-audit'
   | 'copilot-blueprint'
   | 'copilot-arc'
+  | 'marketing-synopsis'
+  | 'marketing-blurb'
+  | 'marketing-pitch'
+  | 'reader-genre'
+  | 'reader-editor'
+  | 'reader-agent'
+  | 'reader-booktoker'
+  | 'reader-reviewer'

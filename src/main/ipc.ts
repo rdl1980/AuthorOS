@@ -18,6 +18,7 @@ import type {
   WorldKind
 } from '@shared/domain'
 import type { AIProviderId, SettingsUpdate } from '@shared/settings'
+import type { ExportOptions } from '@shared/publishing'
 import type { Blueprint } from '@shared/copilot'
 import { autowireToBeats } from '@shared/import'
 import { AIGateway, type ChatMessage } from './ai/gateway'
@@ -63,10 +64,16 @@ export function registerIpc(
   const ai = new AIGateway(settings, contextBuilder)
   const publishing = new PublishingService(projects, manuscript, structure)
 
-  // Publishing: export/import (Epic 16 + 21)
-  ipc.handle('pub:exportDocx', (_e, projectId: string) => publishing.exportDocx(projectId))
-  ipc.handle('pub:exportPdf', (_e, projectId: string) => publishing.exportPdf(projectId))
-  ipc.handle('pub:exportEpub', (_e, projectId: string) => publishing.exportEpub(projectId))
+  // Publishing: export/import (Epic 16 + 21 + 31)
+  ipc.handle('pub:exportDocx', (_e, projectId: string, opts?: ExportOptions) =>
+    publishing.exportDocx(projectId, opts)
+  )
+  ipc.handle('pub:exportPdf', (_e, projectId: string, opts?: ExportOptions) =>
+    publishing.exportPdf(projectId, opts)
+  )
+  ipc.handle('pub:exportEpub', (_e, projectId: string, opts?: ExportOptions) =>
+    publishing.exportEpub(projectId, opts)
+  )
   ipc.handle('pub:import', (_e, projectId: string) => publishing.importFile(projectId))
 
   ipc.handle('ai:status', () => ai.status())

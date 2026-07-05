@@ -159,8 +159,93 @@ export function composeAssist(kind: AssistKind, payload: string): Composed {
         user: payload.trim(),
         maxTokens: 2000
       }
+    // --- Marketing (Epic 14) -----------------------------------------------
+    case 'marketing-synopsis':
+      return {
+        system:
+          MARKETING_BASE +
+          'Scrivi una SINOSSI editoriale di 300-500 parole: presenta protagonista, conflitto, posta in gioco ' +
+          'e arco completo della storia INCLUSO il finale (le sinossi per editor rivelano il finale). ' +
+          'Tono professionale, terza persona, tempo presente.',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
+    case 'marketing-blurb':
+      return {
+        system:
+          MARKETING_BASE +
+          'Scrivi una QUARTA DI COPERTINA di 100-150 parole: aggancio emotivo, protagonista, conflitto e domanda ' +
+          'che resta aperta. NON rivelare il finale. Chiudi con una frase a effetto. Tono da libreria, seconda o terza persona.',
+        user: payload.trim(),
+        maxTokens: 800
+      }
+    case 'marketing-pitch':
+      return {
+        system:
+          MARKETING_BASE +
+          'Scrivi 3 PITCH alternativi: 1) elevator pitch di una frase (max 30 parole); 2) pitch "X incontra Y" ' +
+          'con due opere note come riferimento; 3) pitch di 2-3 frasi per un post social. Numerali 1-3.',
+        user: payload.trim(),
+        maxTokens: 800
+      }
+    // --- Reader Simulator (Epic 11) ------------------------------------------
+    case 'reader-genre':
+      return {
+        system:
+          READER_BASE +
+          'Sei un LETTORE FORTE del genere di questo libro. Leggi l\'estratto come farebbe un appassionato: ' +
+          'dove ti sei annoiato? Dove volevi girare pagina? Il gancio funziona? I tropi del genere sono rispettati o traditi bene? ' +
+          'Dai un voto da 1 a 10 alla voglia di continuare a leggere e spiega perché.',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
+    case 'reader-editor':
+      return {
+        system:
+          READER_BASE +
+          'Sei un EDITOR PROFESSIONISTA di una casa editrice. Valuta l\'estratto come un manoscritto in acquisizione: ' +
+          'qualità della prosa, voce, struttura, originalità, problemi ricorrenti. Chiudi con: cosa sistemerei prima di pubblicare (3 punti) ' +
+          'e un giudizio onesto in una riga.',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
+    case 'reader-agent':
+      return {
+        system:
+          READER_BASE +
+          'Sei un AGENTE LETTERARIO. Valuta VENDIBILITÀ e posizionamento: a che scaffale appartiene, comparabili recenti, ' +
+          'punti di forza commerciali, ostacoli alla vendita, a quali editori lo proporresti. Chiudi con: "Lo rappresenterei: sì/no/forse" e perché.',
+        user: payload.trim(),
+        maxTokens: 1500
+      }
+    case 'reader-booktoker':
+      return {
+        system:
+          READER_BASE +
+          'Sei un BOOKTOKER con un pubblico giovane. Reagisci all\'estratto: quali momenti diventerebbero virali, ' +
+          'quali hashtag useresti, che hook diresti nei primi 3 secondi del video. Se non funzionerebbe su BookTok, dillo chiaramente e spiega cosa manca.',
+        user: payload.trim(),
+        maxTokens: 1200
+      }
+    case 'reader-reviewer':
+      return {
+        system:
+          READER_BASE +
+          'Sei un RECENSORE AMAZON esigente ma corretto. Scrivi la recensione che pubblicheresti: titolo della recensione, ' +
+          'stelle (1-5), cosa ti è piaciuto, cosa no, a chi lo consiglieresti. Realistico, come una vera recensione.',
+        user: payload.trim(),
+        maxTokens: 1200
+      }
   }
 }
+
+const MARKETING_BASE =
+  'Sei un copywriter editoriale esperto. Ti viene fornita la panoramica di un romanzo (trama, capitoli, personaggi). ' +
+  'Rispondi in italiano, SOLO con il testo richiesto, senza preamboli né spiegazioni. '
+
+const READER_BASE =
+  'Ti viene fornito un estratto di manoscritto con una breve panoramica. Rispondi in italiano, in prima persona, ' +
+  'restando nel personaggio richiesto. Sii onesto: un feedback tutto positivo non aiuta l\'autore. Niente preamboli. '
 
 const EDITOR_BASE =
   'Sei un editor narrativo esperto. Analizza il testo fornito e rispondi in italiano con un elenco puntato conciso. ' +

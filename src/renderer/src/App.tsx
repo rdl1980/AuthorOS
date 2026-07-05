@@ -8,6 +8,7 @@ import { useOnboarding } from './store/useOnboarding'
 import { OnboardingOverlay } from './components/OnboardingOverlay'
 import { CommandPalette } from './components/CommandPalette'
 import { usePrefs } from './store/usePrefs'
+import { moduleTitle, useLang } from './lib/i18n'
 
 export default function App(): JSX.Element {
   const { moduleId, goTo } = useNav()
@@ -25,6 +26,7 @@ export default function App(): JSX.Element {
       try {
         const settings = await window.authoros.settings.get()
         usePrefs.getState().init(settings)
+        useLang.getState().setLang(settings.language)
         if (!settings.onboardingDone) onboarding.setVisible(true)
         if (settings.lastProjectId) {
           const project = await window.authoros.projects.get(settings.lastProjectId)
@@ -43,6 +45,7 @@ export default function App(): JSX.Element {
     void window.authoros.settings.update({ lastProjectId: activeProject?.id ?? null })
   }, [activeProject?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const lang = useLang((s) => s.lang)
   const active = getModule(moduleId) ?? modules[0]
   const ActiveComponent = active.component
 
@@ -69,7 +72,7 @@ export default function App(): JSX.Element {
               }`}
             >
               <span className="text-base">{m.icon}</span>
-              <span className="flex-1">{m.title}</span>
+              <span className="flex-1">{moduleTitle(m.id, m.title, lang)}</span>
               {m.status === 'planned' && (
                 <span className="rounded-full border border-line px-1.5 py-0.5 text-[10px] text-muted">
                   soon

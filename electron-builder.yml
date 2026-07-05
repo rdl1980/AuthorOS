@@ -21,6 +21,25 @@ win:
   target:
     - target: nsis
       arch: [x64]
+  # US-32.3 (code signing): pronto all'uso — basta un certificato.
+  # Con un certificato .pfx classico: esporta CSC_LINK (percorso/URL del .pfx)
+  # e CSC_KEY_PASSWORD prima di `npm run dist`; electron-builder firma da solo.
+  # Con un certificato EV/HSM o Azure Trusted Signing: decommenta e configura:
+  # signtoolOptions:
+  #   publisherName: rdl1980
+  #   certificateSubjectName: rdl1980
+  # verifyUpdateCodeSignature: true
+
+# US-32.5 (macOS): configurazione pronta; la build .dmg va eseguita su un Mac
+# (`npm run dist -- --mac`). L'icona .icns viene generata da build/icon.png.
+mac:
+  category: public.app-category.productivity
+  icon: build/icon.png
+  target:
+    - target: dmg
+      arch: [universal]
+dmg:
+  artifactName: AuthorOS-${version}.${ext}
 
 nsis:
   oneClick: false
