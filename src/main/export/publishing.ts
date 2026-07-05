@@ -20,6 +20,28 @@ export class PublishingService {
     private readonly structure: StructureRepository
   ) {}
 
+  /**
+   * US-21.6: rimuove i capitoli segnaposto rimasti vuoti (es. "Capitolo 1" del
+   * template onboarding) prima di aggiungere il manoscritto importato, così
+   * l'albero non mostra duplicati fantasma. Tocca solo capitoli con titolo
+   * generico e senza una parola scritta.
+   */
+  cleanupPlaceholders(projectId: string): number {
+    const chapters = this.manuscript.listChapters(projectId)
+    const scenes = this.manuscript.listScenes(projectId)
+    let removed = 0
+    for (const ch of chapters) {
+      const own = scenes.filter((s) => s.chapterId === ch.id)
+      const generic = /^(capitolo \d+|nuovo capitolo)$/i.test(ch.title.trim())
+      const empty = own.every((s) => s.wordCount === 0 && !s.content.trim())
+      if (generic && empty) {
+        this.manuscript.deleteChapter(ch.id)
+        removed += 1
+      }
+    }
+    return removed
+  }
+
   private model(projectId: string): ManuscriptModel | null {
     const project = this.projects.get(projectId)
     if (!project) return null
@@ -112,6 +134,9 @@ export class PublishingService {
 
       const parsed = parseManuscript(markdown)
       if (parsed.length === 0) return { ok: false, error: 'nessun contenuto riconosciuto' }
+
+      // US-21.6: via i capitoli segnaposto vuoti prima di aggiungere quelli veri.
+      this.cleanupPlaceholders(projectId)
 
       let scenes = 0
       let words = 0

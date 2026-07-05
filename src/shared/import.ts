@@ -23,6 +23,8 @@ export function parseManuscript(text: string): ParsedChapter[] {
   let scene: ParsedScene | null = null
   let buffer: string[] = []
   let sceneCounter = 0
+  /** Il primo capitolo è stato aperto implicitamente (testo prima di un heading)? */
+  let firstChapterAuto = false
 
   const flushScene = (): void => {
     const content = buffer.join('\n').trim()
@@ -33,14 +35,16 @@ export function parseManuscript(text: string): ParsedChapter[] {
       if (scene.content || scene.title) chapter.scenes.push(scene)
       scene = null
     } else if (content) {
+      // US-21.7: le scene senza titolo sono numerate "Scena x.y" (x = capitolo).
       sceneCounter += 1
-      chapter.scenes.push({ title: `Scena ${sceneCounter}`, content })
+      chapter.scenes.push({ title: `Scena ${chapters.length}.${sceneCounter}`, content })
     }
   }
 
-  const openChapter = (title: string): void => {
+  const openChapter = (title: string, auto = false): void => {
     flushScene()
     sceneCounter = 0
+    if (chapters.length === 0) firstChapterAuto = auto
     chapter = { title: title.trim() || `Capitolo ${chapters.length + 1}`, scenes: [] }
     chapters.push(chapter)
   }
@@ -56,27 +60,31 @@ export function parseManuscript(text: string): ParsedChapter[] {
 
     const h2 = line.match(/^##\s+(.*)$/)
     if (h2) {
-      if (!chapter) openChapter('Capitolo 1')
+      if (!chapter) openChapter('Capitolo 1', true)
       flushScene()
       scene = { title: h2[1].trim() || 'Scena', content: '' }
       continue
     }
 
     if (/^(\*\s*\*\s*\*|-{3,})\s*$/.test(line.trim())) {
-      if (!chapter) openChapter('Capitolo 1')
+      if (!chapter) openChapter('Capitolo 1', true)
       flushScene()
       continue
     }
 
-    if (!chapter && line.trim()) openChapter('Capitolo 1')
+    if (!chapter && line.trim()) openChapter('Capitolo 1', true)
     buffer.push(line)
   }
   flushScene()
 
+  // US-21.6: il testo prima del primo vero capitolo non deve mascherarsi da
+  // "Capitolo 1" — se seguono altri capitoli espliciti diventa "Premessa".
+  if (firstChapterAuto && chapters.length > 1) chapters[0].title = 'Premessa'
+
   // Capitoli senza scene (es. solo heading) → scena vuota per mantenerli navigabili
-  for (const ch of chapters) {
-    if (ch.scenes.length === 0) ch.scenes.push({ title: 'Scena 1', content: '' })
-  }
+  chapters.forEach((ch, i) => {
+    if (ch.scenes.length === 0) ch.scenes.push({ title: `Scena ${i + 1}.1`, content: '' })
+  })
   return chapters
 }
 

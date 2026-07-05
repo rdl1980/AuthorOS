@@ -53,10 +53,10 @@ L'obiettivo non è sostituire l'autore, ma accelerare il processo creativo lasci
 ## Stato Implementazione
 
 > Legenda: ✅ completata · 🔄 in corso · ⬜ da fare. Nel backlog visuale le voci ✅ sono **barrate**.
-> Aggiornato a: **v0.2.0 rilasciata** (installer Windows). 🏁 MVP must-have + 4/5 Should-have completi. ⚠️ Due bug di import noti dal collaudo (US-21.6/21.7), non ancora corretti.
+> Aggiornato a: **v0.2.0 rilasciata** (installer Windows). 🏁 MVP must-have + 4/5 Should-have completi. Sprint 0 completato (bug import corretti).
 
-- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-21.5, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3, US-7.1, US-7.2, US-7.3, US-8.1, US-8.2, US-8.3, US-8.4, US-24.1, US-24.2, US-24.3, US-25.1, US-25.2, US-25.3
-- **In corso (🔄):** US-21.6, US-21.7 (Sprint 0 — bug import). A seguire: Ondata 1 della Roadmap Top-Tier (vedi sotto).
+- **Completate (✅):** US-1.1, US-1.2, US-1.3, US-1.4, US-1.5, US-2.1, US-2.2, US-2.3, US-2.4, US-2.5, US-2.6, US-2.7, US-3.1, US-3.2, US-3.3, US-3.4, US-3.5, US-3.6, US-3.9, US-4.1, US-4.2, US-4.3, US-4.4, US-4.5, US-5.1, US-5.2, US-5.3, US-5.4, US-5.5, US-6.1, US-6.2, US-6.3, US-6.4, US-6.5, US-9.1, US-9.2, US-9.3, US-9.4, US-10.1, US-10.2, US-10.3, US-10.4, US-10.5, US-16.1, US-16.2, US-16.3, US-17.1, US-17.2, US-18.1, US-21.1, US-21.2, US-21.3, US-21.5, US-21.6, US-21.7, US-22.1, US-22.2, US-22.3, US-22.4, US-22.5, US-23.1, US-23.2, US-23.3, US-7.1, US-7.2, US-7.3, US-8.1, US-8.2, US-8.3, US-8.4, US-24.1, US-24.2, US-24.3, US-25.1, US-25.2, US-25.3
+- **In corso (🔄):** Epic 30 — Affidabilità & Portabilità dati (Ondata 1).
 
 > Nota: US-7.4 (cronologie storiche) è in larga parte coperta dal Timeline Engine (eventi con etichette temporali libere); resta aperta come evoluzione dedicata.
 

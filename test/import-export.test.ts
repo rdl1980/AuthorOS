@@ -57,6 +57,25 @@ describe('parseManuscript (US-21.3)', () => {
   it('testo vuoto → nessun capitolo', () => {
     expect(parseManuscript('')).toHaveLength(0)
   })
+
+  it('US-21.6: il testo prima del primo capitolo diventa "Premessa"', () => {
+    const md = 'Titolo del libro\ndi Autore Autorevole\n\n# Capitolo 1: Inizio\ntesto vero'
+    const parsed = parseManuscript(md)
+    expect(parsed).toHaveLength(2)
+    expect(parsed[0].title).toBe('Premessa')
+    expect(parsed[0].scenes[0].content).toContain('Autore Autorevole')
+    expect(parsed[1].title).toBe('Capitolo 1: Inizio')
+  })
+
+  it('US-21.7: scene senza titolo numerate "Scena x.y"', () => {
+    const md = '# Uno\nprima\n\n***\n\nseconda\n# Due\nterza'
+    const parsed = parseManuscript(md)
+    expect(parsed[0].scenes.map((s) => s.title)).toEqual(['Scena 1.1', 'Scena 1.2'])
+    expect(parsed[1].scenes.map((s) => s.title)).toEqual(['Scena 2.1'])
+    // capitolo vuoto → filler numerato
+    const vuoto = parseManuscript('# Solo heading\n# Pieno\ntesto')
+    expect(vuoto[0].scenes[0].title).toBe('Scena 1.1')
+  })
 })
 
 describe('htmlToMarkdown (US-21.1)', () => {
@@ -116,6 +135,34 @@ describe('autowireToBeats (US-21.5)', () => {
     // prima scena → primo beat (Setup), ultima → beat in coda
     expect(links.find((l) => l.sceneId === ids[0])?.beatId).toBe(beats[0].id)
     expect(links.find((l) => l.sceneId === ids[3])?.beatId).toBe(beats[6].id)
+  })
+})
+
+describe('cleanupPlaceholders (US-21.6)', () => {
+  it('rimuove i capitoli segnaposto vuoti, preserva quelli con contenuto o titolo proprio', async () => {
+    const { PublishingService } = await import('../src/main/export/publishing')
+    const { SqliteStructureRepository } = await import('../src/main/data/structure-repository')
+    const db = await makeDb()
+    const projects = new SqliteProjectRepository(db)
+    const ms = new SqliteManuscriptRepository(db)
+    const pid = projects.create({ title: 'Libro' }).id
+
+    // segnaposto onboarding: "Capitolo 1" con scena vuota → da rimuovere
+    const ph = ms.createChapter(pid, 'Capitolo 1')
+    ms.createScene(pid, ph.id, 'Scena 1')
+    // capitolo generico ma con testo → resta
+    const pieno = ms.createChapter(pid, 'Capitolo 2')
+    const sc = ms.createScene(pid, pieno.id, 'S')
+    ms.updateScene(sc.id, { content: 'contenuto scritto' })
+    // capitolo vuoto ma con titolo proprio → resta
+    ms.createChapter(pid, 'Atto II — da scrivere')
+
+    const svc = new PublishingService(projects, ms, new SqliteStructureRepository(db))
+    expect(svc.cleanupPlaceholders(pid)).toBe(1)
+    expect(ms.listChapters(pid).map((c) => c.title).sort()).toEqual([
+      'Atto II — da scrivere',
+      'Capitolo 2'
+    ])
   })
 })
 
