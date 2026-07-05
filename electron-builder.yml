@@ -17,6 +17,7 @@ asarUnpack:
   - node_modules/sql.js/dist/*.wasm
 
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch: [x64]
@@ -27,6 +28,15 @@ nsis:
   createDesktopShortcut: always
   shortcutName: AuthorOS
   artifactName: AuthorOS-Setup-${version}.${ext}
+  # Rileva una versione già installata e propone di disinstallarla prima.
+  include: build/installer.nsh
+
+# Auto-update via GitHub Releases (US-32.2): pubblicare la release con
+# l'installer + latest.yml generati da `npm run dist` (electron-builder).
+publish:
+  provider: github
+  owner: rdl1980
+  repo: AuthorOS
 
 # Niente firma del codice in questa fase (installer non firmato).
 forceCodeSigning: false

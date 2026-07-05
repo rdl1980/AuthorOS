@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { join } from 'node:path'
 import { registerIpc } from './ipc'
 import { initDatabase } from './data/db'
@@ -74,6 +75,13 @@ app.whenReady().then(async () => {
   }, 15 * 60 * 1000)
 
   createWindow()
+
+  // US-32.2: aggiornamenti automatici da GitHub Releases (solo app pacchettizzata).
+  if (app.isPackaged) {
+    autoUpdater.checkForUpdatesAndNotify().catch(() => {
+      // offline o release non ancora pubblicata: silenzioso, si riprova al prossimo avvio
+    })
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
