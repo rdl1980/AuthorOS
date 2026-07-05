@@ -11,7 +11,29 @@ const EMPTY_STATS: ProjectStats = { words: 0, scenes: 0, chapters: 0 }
 
 export function WritingWorkspaceView(): JSX.Element {
   const project = useLibrary((s) => s.active)
-  const { selectedSceneId, focusMode, notesOpen, select, toggleFocus, toggleNotes } = useWorkspace()
+  const {
+    selectedSceneId,
+    focusMode,
+    notesOpen,
+    typewriter,
+    select,
+    toggleFocus,
+    toggleNotes,
+    toggleTypewriter
+  } = useWorkspace()
+
+  // Trova & sostituisci (US-26.1)
+  const [findOpen, setFindOpen] = useState(false)
+  const [findText, setFindText] = useState('')
+  const [replaceText, setReplaceText] = useState('')
+  const [matchCase, setMatchCase] = useState(false)
+  const [findScope, setFindScope] = useState<'scene' | 'project'>('project')
+  const [findMessage, setFindMessage] = useState<string | null>(null)
+
+  // Sprint di scrittura (US-26.4)
+  const [sprint, setSprint] = useState<{ endsAt: number; startWords: number } | null>(null)
+  const [sprintDone, setSprintDone] = useState<number | null>(null)
+  const [, forceTick] = useState(0)
 
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [scenes, setScenes] = useState<Scene[]>([])
@@ -57,6 +79,46 @@ export function WritingWorkspaceView(): JSX.Element {
   }, [project, selectedSceneId, ms])
 
   const selectedScene = scenes.find((s) => s.id === selectedSceneId) ?? null
+
+  // Tick del countdown sprint + chiusura automatica (US-26.4)
+  useEffect(() => {
+    if (!sprint) return
+    const t = setInterval(() => {
+      if (Date.now() >= sprint.endsAt) {
+        setSprintDone(stats.words - sprint.startWords)
+        setSprint(null)
+      } else {
+        forceTick((n) => n + 1)
+      }
+    }, 1000)
+    return () => clearInterval(t)
+  }, [sprint, stats.words])
+
+  const startSprint = (minutes: number): void => {
+    setSprintDone(null)
+    setSprint({ endsAt: Date.now() + minutes * 60000, startWords: stats.words })
+  }
+
+  // US-26.1: sostituzione con ricarica forzata della scena aperta
+  const runReplace = async (): Promise<void> => {
+    if (!project || !findText) return
+    const res = await ms.replace(project.id, findText, replaceText, {
+      sceneId: findScope === 'scene' ? (selectedSceneId ?? undefined) : undefined,
+      matchCase
+    })
+    setFindMessage(
+      res.occurrences === 0
+        ? 'Nessuna occorrenza trovata.'
+        : `${res.occurrences} sostituzioni in ${res.scenes} scen${res.scenes === 1 ? 'a' : 'e'}.`
+    )
+    const current = selectedSceneId
+    await reloadTree()
+    if (current && res.occurrences > 0) {
+      // rimonta l'editor con il contenuto aggiornato
+      select(null)
+      setTimeout(() => select(current), 0)
+    }
+  }
 
   // --- mutazioni capitoli/scene ------------------------------------------
 
@@ -202,7 +264,41 @@ export function WritingWorkspaceView(): JSX.Element {
             <div className="h-full bg-green" style={{ width: `${pct}%` }} />
           </div>
         )}
+        {/* Sprint (US-26.4) */}
+        {sprint ? (
+          <span className="rounded-full bg-cyan/15 px-3 py-1 text-xs text-cyan">
+            ⏱ {Math.max(0, Math.floor((sprint.endsAt - Date.now()) / 60000))}:
+            {String(Math.max(0, Math.floor(((sprint.endsAt - Date.now()) % 60000) / 1000))).padStart(2, '0')}{' '}
+            · +{Math.max(0, stats.words - sprint.startWords)} parole
+            <button className="ml-2 text-muted hover:text-ink" onClick={() => setSprint(null)}>✕</button>
+          </span>
+        ) : sprintDone !== null ? (
+          <span className="rounded-full bg-green/15 px-3 py-1 text-xs text-green">
+            🏁 Sprint finito: +{Math.max(0, sprintDone)} parole
+            <button className="ml-2 text-muted hover:text-ink" onClick={() => setSprintDone(null)}>✕</button>
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-xs text-muted">
+            Sprint:
+            <button className="rounded-md border border-line px-2 py-0.5 hover:border-cyan" onClick={() => startSprint(15)}>15′</button>
+            <button className="rounded-md border border-line px-2 py-0.5 hover:border-cyan" onClick={() => startSprint(25)}>25′</button>
+          </span>
+        )}
         <div className="ml-auto flex gap-2">
+          <button
+            className={`rounded-md border px-3 py-1 text-xs ${findOpen ? 'border-cyan bg-cyan/15 text-cyan' : 'border-line hover:border-cyan'}`}
+            onClick={() => setFindOpen((v) => !v)}
+            title="Trova e sostituisci (US-26.1)"
+          >
+            🔍
+          </button>
+          <button
+            className={`rounded-md border px-3 py-1 text-xs ${typewriter ? 'border-cyan bg-cyan/15 text-cyan' : 'border-line hover:border-cyan'}`}
+            onClick={toggleTypewriter}
+            title="Typewriter mode: riga corrente sempre centrata (US-26.3)"
+          >
+            ⌨
+          </button>
           <button
             className="rounded-md border border-line px-3 py-1 text-xs hover:border-cyan"
             onClick={toggleNotes}
@@ -217,6 +313,48 @@ export function WritingWorkspaceView(): JSX.Element {
           </button>
         </div>
       </div>
+
+      {/* Pannello trova & sostituisci (US-26.1) */}
+      {findOpen && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-panel/50 p-3">
+          <input
+            className="min-w-[160px] flex-1 rounded-lg border border-line bg-bg/60 px-3 py-1.5 text-sm outline-none focus:border-cyan"
+            placeholder="Trova…"
+            value={findText}
+            onChange={(e) => setFindText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && runReplace()}
+          />
+          <input
+            className="min-w-[160px] flex-1 rounded-lg border border-line bg-bg/60 px-3 py-1.5 text-sm outline-none focus:border-cyan"
+            placeholder="Sostituisci con…"
+            value={replaceText}
+            onChange={(e) => setReplaceText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && runReplace()}
+          />
+          <select
+            className="rounded-lg border border-line bg-bg/60 px-2 py-1.5 text-xs outline-none focus:border-cyan"
+            value={findScope}
+            onChange={(e) => setFindScope(e.target.value as 'scene' | 'project')}
+          >
+            <option value="project">Tutto il progetto</option>
+            <option value="scene" disabled={!selectedSceneId}>
+              Scena corrente
+            </option>
+          </select>
+          <label className="flex items-center gap-1 text-xs text-muted">
+            <input type="checkbox" checked={matchCase} onChange={(e) => setMatchCase(e.target.checked)} />
+            Maiuscole
+          </label>
+          <button
+            className="rounded-lg bg-cyan px-3 py-1.5 text-xs font-semibold text-bg hover:opacity-90 disabled:opacity-50"
+            onClick={runReplace}
+            disabled={!findText}
+          >
+            Sostituisci tutto
+          </button>
+          {findMessage && <span className="text-xs text-muted">{findMessage}</span>}
+        </div>
+      )}
 
       {/* Corpo a 3 colonne */}
       <div className="flex min-h-0 flex-1 gap-4">

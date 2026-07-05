@@ -106,6 +106,12 @@ export function ChapterTree(props: Props): JSX.Element {
                         : 'text-muted hover:bg-white/5 hover:text-ink'
                     }`}
                   >
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${
+                        sc.status === 'final' ? 'bg-green' : sc.status === 'revision' ? 'bg-yellow' : 'bg-white/20'
+                      }`}
+                      title={sc.status === 'final' ? 'Finale' : sc.status === 'revision' ? 'Revisione' : 'Bozza'}
+                    />
                     <button className="flex-1 truncate text-left" onClick={() => props.onSelectScene(sc.id)}>
                       {sc.title}
                       <span className="ml-2 text-[10px] text-muted">{sc.wordCount}p</span>

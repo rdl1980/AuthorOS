@@ -24,9 +24,22 @@ body {
 .ProseMirror {
   outline: none;
   min-height: 100%;
-  font-size: 0.95rem;
+  font-size: inherit;
+  font-family: inherit;
   line-height: 1.7;
   color: rgba(237, 242, 255, 0.92);
+}
+
+/* Tema chiaro dell'area di scrittura (US-26.6) */
+.editor-light .ProseMirror {
+  color: #24211c;
+}
+.editor-light .ProseMirror blockquote {
+  color: #5a544a;
+  border-left-color: #b09be0;
+}
+.editor-light .ProseMirror p.is-editor-empty:first-child::before {
+  color: #8a8478;
 }
 .ProseMirror p {
   margin: 0 0 0.6em;

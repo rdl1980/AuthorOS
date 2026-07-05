@@ -11,7 +11,7 @@ export interface AppModule {
   title: string
   /** Glyph/emoji segnaposto finché non introduciamo un set di icone. */
   icon: string
-  release: 'V1' | 'V2' | 'V3'
+  release: 'V1' | 'V1.5' | 'V2' | 'V3'
   status: 'ready' | 'planned'
   component: ComponentType
 }

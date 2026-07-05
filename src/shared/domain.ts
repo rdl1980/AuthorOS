@@ -10,6 +10,8 @@ export interface Project {
   genre: string | null
   framework: string | null
   targetWordCount: number | null
+  /** Scadenza del progetto (ISO date), usata per la proiezione ritmo (US-27.3). */
+  deadline: string | null
   status: ProjectStatus
   ownerId: string | null
   createdAt: string
@@ -20,7 +22,7 @@ export type NewProject = Pick<Project, 'title'> &
   Partial<Pick<Project, 'genre' | 'framework' | 'targetWordCount'>>
 
 export type ProjectUpdate = Partial<
-  Pick<Project, 'title' | 'genre' | 'framework' | 'targetWordCount' | 'status'>
+  Pick<Project, 'title' | 'genre' | 'framework' | 'targetWordCount' | 'status' | 'deadline'>
 >
 
 // --- Manoscritto (Epic 2) -------------------------------------------------
@@ -34,6 +36,8 @@ export interface Chapter {
   updatedAt: string
 }
 
+export type SceneStatus = 'draft' | 'revision' | 'final'
+
 export interface Scene {
   id: string
   projectId: string
@@ -41,6 +45,8 @@ export interface Scene {
   title: string
   content: string
   wordCount: number
+  /** Stato di lavorazione (US-26.2). */
+  status: SceneStatus
   sortOrder: number
   createdAt: string
   updatedAt: string
@@ -56,7 +62,19 @@ export interface Note {
   updatedAt: string
 }
 
-export type SceneUpdate = Partial<Pick<Scene, 'title' | 'content'>>
+export type SceneUpdate = Partial<Pick<Scene, 'title' | 'content' | 'status'>>
+
+/** Parole nette scritte in un giorno (US-27.1). */
+export interface DailyStat {
+  date: string
+  wordsAdded: number
+}
+
+/** Esito di trova & sostituisci (US-26.1). */
+export interface ReplaceResult {
+  scenes: number
+  occurrences: number
+}
 
 /** Aggregati di avanzamento per il conteggio parole/target (US-2.5). */
 export interface ProjectStats {

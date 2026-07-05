@@ -17,6 +17,11 @@ interface StoredSettings {
   lastProjectId: string | null
   onboardingDone: boolean
   backupDir: string | null
+  dailyGoal: number
+  editorFont: AppSettings['editorFont']
+  editorSize: number
+  editorWidth: AppSettings['editorWidth']
+  editorTheme: AppSettings['editorTheme']
   /** Chiavi cifrate (base64) per provider. */
   keys: Partial<Record<Exclude<AIProviderId, 'mock'>, string>>
 }
@@ -48,6 +53,11 @@ export class SettingsRepository {
       lastProjectId: null,
       onboardingDone: false,
       backupDir: null,
+      dailyGoal: DEFAULT_SETTINGS.dailyGoal,
+      editorFont: DEFAULT_SETTINGS.editorFont,
+      editorSize: DEFAULT_SETTINGS.editorSize,
+      editorWidth: DEFAULT_SETTINGS.editorWidth,
+      editorTheme: DEFAULT_SETTINGS.editorTheme,
       keys: {}
     }
     if (!existsSync(this.file)) return base
@@ -95,7 +105,12 @@ export class SettingsRepository {
       hasOpenaiKey: Boolean(this.data.keys.openai),
       lastProjectId: this.data.lastProjectId ?? null,
       onboardingDone: this.data.onboardingDone ?? false,
-      backupDir: this.data.backupDir ?? null
+      backupDir: this.data.backupDir ?? null,
+      dailyGoal: this.data.dailyGoal ?? DEFAULT_SETTINGS.dailyGoal,
+      editorFont: this.data.editorFont ?? DEFAULT_SETTINGS.editorFont,
+      editorSize: this.data.editorSize ?? DEFAULT_SETTINGS.editorSize,
+      editorWidth: this.data.editorWidth ?? DEFAULT_SETTINGS.editorWidth,
+      editorTheme: this.data.editorTheme ?? DEFAULT_SETTINGS.editorTheme
     }
   }
 
@@ -111,6 +126,11 @@ export class SettingsRepository {
     if (patch.lastProjectId !== undefined) this.data.lastProjectId = patch.lastProjectId
     if (patch.onboardingDone !== undefined) this.data.onboardingDone = patch.onboardingDone
     if (patch.backupDir !== undefined) this.data.backupDir = patch.backupDir
+    if (patch.dailyGoal !== undefined) this.data.dailyGoal = patch.dailyGoal
+    if (patch.editorFont !== undefined) this.data.editorFont = patch.editorFont
+    if (patch.editorSize !== undefined) this.data.editorSize = patch.editorSize
+    if (patch.editorWidth !== undefined) this.data.editorWidth = patch.editorWidth
+    if (patch.editorTheme !== undefined) this.data.editorTheme = patch.editorTheme
     this.save()
     return this.get()
   }

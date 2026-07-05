@@ -18,10 +18,28 @@ export interface AppSettings {
   onboardingDone: boolean
   /** Cartella dei backup automatici .authoros (US-30.1); null = disattivati. */
   backupDir: string | null
+  /** Obiettivo parole/giorno (US-27.2). */
+  dailyGoal: number
+  /** Preferenze editor (US-26.6). */
+  editorFont: 'serif' | 'sans' | 'mono'
+  editorSize: number
+  editorWidth: 'narrow' | 'normal' | 'wide'
+  editorTheme: 'dark' | 'light'
 }
 
 export type SettingsUpdate = Partial<
-  Pick<AppSettings, 'provider' | 'model' | 'mode' | 'language' | 'lastProjectId' | 'onboardingDone' | 'backupDir'>
+  Pick<AppSettings, | 'provider'
+  | 'model'
+  | 'mode'
+  | 'language'
+  | 'lastProjectId'
+  | 'onboardingDone'
+  | 'backupDir'
+  | 'dailyGoal'
+  | 'editorFont'
+  | 'editorSize'
+  | 'editorWidth'
+  | 'editorTheme'>
 >
 
 /** Cataloghi modelli per provider (US-22.2). */
@@ -45,5 +63,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   hasOpenaiKey: false,
   lastProjectId: null,
   onboardingDone: false,
-  backupDir: null
+  backupDir: null,
+  dailyGoal: 500,
+  editorFont: 'serif',
+  editorSize: 17,
+  editorWidth: 'normal',
+  editorTheme: 'dark'
 }

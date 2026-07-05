@@ -9,6 +9,7 @@ import { TimelineView } from './views/TimelineView'
 import { WorldView } from './views/WorldView'
 import { AiEditorView } from './views/AiEditorView'
 import { PlotView } from './views/PlotView'
+import { StatsView } from './views/StatsView'
 import { PublishingView } from './views/PublishingView'
 import { SearchSnapshotsView } from './views/SearchSnapshotsView'
 import { SettingsView } from './views/SettingsView'
@@ -109,6 +110,15 @@ export const modules: AppModule[] = [
     release: 'V1',
     status: 'ready',
     component: AiEditorView
+  },
+  {
+    id: 'stats',
+    epic: 27,
+    title: 'Progressi',
+    icon: '📈',
+    release: 'V1.5',
+    status: 'ready',
+    component: StatsView
   },
   {
     id: 'publish',

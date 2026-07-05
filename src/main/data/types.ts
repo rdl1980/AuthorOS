@@ -1,5 +1,7 @@
 import type {
   ArcStep,
+  DailyStat,
+  ReplaceResult,
   ArcUpdate,
   Beat,
   BeatLink,
@@ -76,6 +78,17 @@ export interface ManuscriptRepository {
 
   // Avanzamento (US-2.5)
   getStats(projectId: string): ProjectStats
+
+  // Trova & sostituisci (US-26.1): letterale; sceneId limita a una scena.
+  replaceText(
+    projectId: string,
+    find: string,
+    replaceWith: string,
+    opts?: { sceneId?: string; matchCase?: boolean }
+  ): ReplaceResult
+
+  // Statistiche di scrittura (US-27.1): parole nette per giorno.
+  getDailyStats(projectId: string, sinceDays: number): DailyStat[]
 }
 
 /** Profili di stile / Author Voice (Epic 23). Un solo profilo attivo per progetto. */

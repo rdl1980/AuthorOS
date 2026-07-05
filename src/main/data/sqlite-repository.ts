@@ -17,6 +17,7 @@ import {
   styleProfiles,
   timelineEvents,
   worldElements,
+  writingStats,
   type ProjectRow
 } from './schema'
 import type { ProjectRepository } from './types'
@@ -27,6 +28,7 @@ const toDomain = (row: ProjectRow): Project => ({
   genre: row.genre,
   framework: row.framework,
   targetWordCount: row.targetWordCount,
+  deadline: row.deadline,
   status: row.status,
   ownerId: row.ownerId,
   createdAt: row.createdAt,
@@ -57,6 +59,7 @@ export class SqliteProjectRepository implements ProjectRepository {
       genre: input.genre ?? null,
       framework: input.framework ?? null,
       targetWordCount: input.targetWordCount ?? null,
+      deadline: null,
       status: 'active',
       ownerId: null,
       createdAt: now,
@@ -77,6 +80,7 @@ export class SqliteProjectRepository implements ProjectRepository {
       framework: patch.framework !== undefined ? patch.framework : current.framework,
       targetWordCount:
         patch.targetWordCount !== undefined ? patch.targetWordCount : current.targetWordCount,
+      deadline: patch.deadline !== undefined ? patch.deadline : current.deadline,
       updatedAt: new Date().toISOString()
     }
     this.db.orm
@@ -86,6 +90,7 @@ export class SqliteProjectRepository implements ProjectRepository {
         genre: updated.genre,
         framework: updated.framework,
         targetWordCount: updated.targetWordCount,
+        deadline: updated.deadline,
         status: updated.status,
         updatedAt: updated.updatedAt
       })
@@ -334,6 +339,7 @@ export class SqliteProjectRepository implements ProjectRepository {
     orm.delete(chapters).where(eq(chapters.projectId, id)).run()
     orm.delete(styleProfiles).where(eq(styleProfiles.projectId, id)).run()
     orm.delete(worldElements).where(eq(worldElements.projectId, id)).run()
+    orm.delete(writingStats).where(eq(writingStats.projectId, id)).run()
     orm.delete(projects).where(eq(projects.id, id)).run()
 
     this.db.persist()

@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { AIRequest, AIResult, AIStatus, AssistKind } from '@shared/ai'
 import type {
   ArcStep,
+  DailyStat,
+  ReplaceResult,
   ArcUpdate,
   Beat,
   BeatLink,
@@ -117,7 +119,15 @@ const api = {
       ipcRenderer.invoke('ms:noteUpdate', id, content),
     noteDelete: (id: string): Promise<boolean> => ipcRenderer.invoke('ms:noteDelete', id),
 
-    stats: (projectId: string): Promise<ProjectStats> => ipcRenderer.invoke('ms:stats', projectId)
+    stats: (projectId: string): Promise<ProjectStats> => ipcRenderer.invoke('ms:stats', projectId),
+    replace: (
+      projectId: string,
+      find: string,
+      replaceWith: string,
+      opts?: { sceneId?: string; matchCase?: boolean }
+    ): Promise<ReplaceResult> => ipcRenderer.invoke('ms:replace', projectId, find, replaceWith, opts),
+    statsDaily: (projectId: string, sinceDays: number): Promise<DailyStat[]> =>
+      ipcRenderer.invoke('ms:statsDaily', projectId, sinceDays)
   },
   characters: {
     list: (projectId: string): Promise<Character[]> => ipcRenderer.invoke('char:list', projectId),

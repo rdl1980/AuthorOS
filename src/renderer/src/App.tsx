@@ -6,6 +6,8 @@ import { useLibrary } from './store/useLibrary'
 import { useNav } from './store/useNav'
 import { useOnboarding } from './store/useOnboarding'
 import { OnboardingOverlay } from './components/OnboardingOverlay'
+import { CommandPalette } from './components/CommandPalette'
+import { usePrefs } from './store/usePrefs'
 
 export default function App(): JSX.Element {
   const { moduleId, goTo } = useNav()
@@ -22,6 +24,7 @@ export default function App(): JSX.Element {
     void (async () => {
       try {
         const settings = await window.authoros.settings.get()
+        usePrefs.getState().init(settings)
         if (!settings.onboardingDone) onboarding.setVisible(true)
         if (settings.lastProjectId) {
           const project = await window.authoros.projects.get(settings.lastProjectId)
@@ -46,6 +49,7 @@ export default function App(): JSX.Element {
   return (
     <div className="flex h-full">
       {onboarding.visible && <OnboardingOverlay />}
+      <CommandPalette />
       {/* Sidebar — moduli dalla registry (architettura modulare) */}
       <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-panel/60">
         <div className="px-5 py-5">

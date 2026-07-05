@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { AppSettings, AIProviderId, Language } from '@shared/settings'
 import { MODELS } from '@shared/settings'
 import { useOnboarding } from '../../store/useOnboarding'
+import { usePrefs } from '../../store/usePrefs'
 
 /** Modulo Settings & AI Config (Epic 22). API key sicura, provider/modello, modalità, lingua. */
 export function SettingsView(): JSX.Element {
@@ -19,7 +20,9 @@ export function SettingsView(): JSX.Element {
 
   const patch = async (p: Parameters<typeof window.authoros.settings.update>[0]): Promise<void> => {
     setSaving(true)
-    setSettings(await window.authoros.settings.update(p))
+    const updated = await window.authoros.settings.update(p)
+    setSettings(updated)
+    usePrefs.getState().init(updated) // tiene sincronizzate le preferenze editor
     setSaving(false)
   }
 
@@ -155,6 +158,59 @@ export function SettingsView(): JSX.Element {
           <option value="en">English</option>
         </select>
         {saving && <span className="text-xs text-muted">Salvataggio…</span>}
+      </section>
+
+      {/* Preferenze editor (US-26.6) */}
+      <section className="mt-4 rounded-2xl border border-line bg-panel/50 p-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-cyan">Editor</h3>
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+          <label className="flex items-center gap-2 text-muted">
+            Font
+            <select
+              className={inputCls}
+              value={settings.editorFont}
+              onChange={(e) => patch({ editorFont: e.target.value as typeof settings.editorFont })}
+            >
+              <option value="serif">Serif (Georgia)</option>
+              <option value="sans">Sans (Inter)</option>
+              <option value="mono">Mono</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-muted">
+            Dimensione
+            <input
+              className={`${inputCls} w-16 text-right`}
+              type="number"
+              min={12}
+              max={28}
+              value={settings.editorSize}
+              onChange={(e) => patch({ editorSize: Math.min(28, Math.max(12, Number(e.target.value) || 17)) })}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-muted">
+            Larghezza
+            <select
+              className={inputCls}
+              value={settings.editorWidth}
+              onChange={(e) => patch({ editorWidth: e.target.value as typeof settings.editorWidth })}
+            >
+              <option value="narrow">Stretta</option>
+              <option value="normal">Normale</option>
+              <option value="wide">Piena</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-muted">
+            Tema foglio
+            <select
+              className={inputCls}
+              value={settings.editorTheme}
+              onChange={(e) => patch({ editorTheme: e.target.value as typeof settings.editorTheme })}
+            >
+              <option value="dark">Scuro</option>
+              <option value="light">Chiaro (carta)</option>
+            </select>
+          </label>
+        </div>
       </section>
 
       {/* Backup automatici (US-30.1) */}

@@ -10,6 +10,7 @@ export const projects = sqliteTable('projects', {
   genre: text('genre'),
   framework: text('framework'),
   targetWordCount: integer('target_word_count'),
+  deadline: text('deadline'),
   status: text('status', { enum: ['active', 'archived'] })
     .notNull()
     .default('active'),
@@ -36,9 +37,19 @@ export const scenes = sqliteTable('scenes', {
   title: text('title').notNull(),
   content: text('content').notNull().default(''),
   wordCount: integer('word_count').notNull().default(0),
+  status: text('status', { enum: ['draft', 'revision', 'final'] })
+    .notNull()
+    .default('draft'),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull()
+})
+
+export const writingStats = sqliteTable('writing_stats', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull(),
+  date: text('date').notNull(),
+  wordsAdded: integer('words_added').notNull().default(0)
 })
 
 export const notes = sqliteTable('notes', {

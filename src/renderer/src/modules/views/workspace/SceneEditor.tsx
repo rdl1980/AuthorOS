@@ -3,12 +3,14 @@ import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import type { Scene } from '@shared/domain'
+import type { Scene, SceneStatus } from '@shared/domain'
 import { countWords } from '@shared/text'
+import { useWorkspace } from '../../../store/useWorkspace'
+import { usePrefs, EDITOR_FONTS, EDITOR_WIDTHS } from '../../../store/usePrefs'
 
 interface Props {
   scene: Scene
-  onChange: (patch: { title?: string; content?: string }) => void
+  onChange: (patch: { title?: string; content?: string; status?: SceneStatus }) => void
   saving: boolean
 }
 
@@ -58,11 +60,12 @@ const TOOLS: ToolButton[] = [
   }
 ]
 
-/**
- * Editor della scena (US-2.1/2.4/2.5): scrittura WYSIWYG con TipTap.
- * Il contenuto resta Markdown nel database (tiptap-markdown), così export,
- * import, word count e AI Editor continuano a lavorare sullo stesso formato.
- */
+const STATUS_META: Record<SceneStatus, { label: string; dot: string }> = {
+  draft: { label: 'Bozza', dot: 'bg-muted' },
+  revision: { label: 'Revisione', dot: 'bg-yellow' },
+  final: { label: 'Finale', dot: 'bg-green' }
+}
+
 /** Bozza di emergenza per il crash recovery (US-30.4). */
 interface PendingDraft {
   content: string
@@ -71,10 +74,16 @@ interface PendingDraft {
 
 const draftKey = (sceneId: string): string => `authoros:draft:${sceneId}`
 
+/**
+ * Editor della scena: WYSIWYG TipTap con Markdown come formato di salvataggio.
+ * Epic 26: stato scena (US-26.2), annotazioni non stampabili (US-26.5),
+ * typewriter mode (US-26.3), preferenze editor (US-26.6).
+ */
 export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
   const [title, setTitle] = useState(scene.title)
   const [words, setWords] = useState(() => countWords(scene.content))
   const [recovered, setRecovered] = useState<PendingDraft | null>(null)
+  const prefs = usePrefs()
 
   const editor = useEditor({
     extensions: [
@@ -95,6 +104,28 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
       onChange({ content: md })
     }
   })
+
+  // US-26.3: typewriter mode — la riga del cursore resta centrata.
+  useEffect(() => {
+    if (!editor) return
+    const center = (): void => {
+      if (!useWorkspace.getState().typewriter) return
+      try {
+        const pos = editor.state.selection.head
+        const dom = editor.view.domAtPos(pos).node
+        const el = dom instanceof Element ? dom : dom.parentElement
+        el?.scrollIntoView({ block: 'center' })
+      } catch {
+        // posizioni transitorie durante grosse modifiche: ignora
+      }
+    }
+    editor.on('selectionUpdate', center)
+    editor.on('update', center)
+    return () => {
+      editor.off('selectionUpdate', center)
+      editor.off('update', center)
+    }
+  }, [editor])
 
   // Cambio scena: ricarica titolo e contenuto (senza emettere onUpdate).
   useEffect(() => {
@@ -131,6 +162,18 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
     setRecovered(null)
   }
 
+  // US-26.5: annotazione inline non stampabile {>>testo<<} (esclusa dagli export).
+  const insertAnnotation = (): void => {
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    const selected = editor.state.doc.textBetween(from, to, ' ')
+    editor
+      .chain()
+      .focus()
+      .insertContentAt({ from, to }, `{>>${selected || 'promemoria'}<<}`)
+      .run()
+  }
+
   return (
     <div className="flex h-full flex-col">
       {recovered && (
@@ -149,6 +192,7 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
           </button>
         </div>
       )}
+
       <div className="mb-2 flex items-center gap-2">
         <input
           className="flex-1 rounded-lg bg-transparent px-2 py-1 text-xl font-semibold outline-none hover:bg-white/5 focus:bg-white/10"
@@ -158,6 +202,20 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
             onChange({ title: e.target.value })
           }}
         />
+        {/* Stato scena (US-26.2) */}
+        <span className={`h-2.5 w-2.5 rounded-full ${STATUS_META[scene.status].dot}`} />
+        <select
+          className="rounded-lg border border-line bg-bg/60 px-2 py-1 text-xs outline-none focus:border-cyan"
+          value={scene.status}
+          onChange={(e) => onChange({ status: e.target.value as SceneStatus })}
+          title="Stato di lavorazione della scena"
+        >
+          {(Object.keys(STATUS_META) as SceneStatus[]).map((s) => (
+            <option key={s} value={s}>
+              {STATUS_META[s].label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="mb-2 flex items-center gap-1">
@@ -177,6 +235,14 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
               {t.label}
             </button>
           ))}
+        <button
+          title="Annotazione non stampabile (esclusa dagli export)"
+          onMouseDown={(ev) => ev.preventDefault()}
+          onClick={insertAnnotation}
+          className="min-w-[30px] rounded-md border border-line px-2 py-1 text-xs text-muted hover:border-violet hover:text-violet"
+        >
+          💬
+        </button>
         <span className="ml-auto flex items-center gap-3 text-xs text-muted">
           <span>{words} parole</span>
           <span>·</span>
@@ -184,8 +250,21 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
         </span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-line bg-bg/40 p-4 focus-within:border-cyan">
-        <EditorContent editor={editor} className="h-full" />
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto rounded-lg border border-line p-4 focus-within:border-cyan ${
+          prefs.editorTheme === 'light' ? 'editor-light bg-[#f5f1e8]' : 'bg-bg/40'
+        }`}
+      >
+        <div
+          className="mx-auto h-full"
+          style={{
+            fontFamily: EDITOR_FONTS[prefs.editorFont],
+            fontSize: `${prefs.editorSize}px`,
+            maxWidth: EDITOR_WIDTHS[prefs.editorWidth]
+          }}
+        >
+          <EditorContent editor={editor} className="h-full" />
+        </div>
       </div>
     </div>
   )

@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { asc, eq, inArray } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import type {
   Chapter,
+  DailyStat,
+  ReplaceResult,
   Note,
   NoteScope,
   ProjectStats,
@@ -10,7 +12,8 @@ import type {
 } from '@shared/domain'
 import { countWords } from '@shared/text'
 import type { DB } from './db'
-import { beatScenes, chapters, notes, scenes } from './schema'
+import { randomUUID as uuid } from 'node:crypto'
+import { beatScenes, chapters, notes, scenes, writingStats } from './schema'
 import type { ManuscriptRepository } from './types'
 
 const now = (): string => new Date().toISOString()
@@ -115,6 +118,7 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
       title: title.trim() || 'Nuova scena',
       content: '',
       wordCount: 0,
+      status: 'draft',
       sortOrder: this.sceneIdsOfChapter(chapterId).length,
       createdAt: ts,
       updatedAt: ts
@@ -128,18 +132,91 @@ export class SqliteManuscriptRepository implements ManuscriptRepository {
     const current = this.getScene(id)
     if (!current) return null
     const content = patch.content !== undefined ? patch.content : current.content
+    const newCount = countWords(content)
     this.orm
       .update(scenes)
       .set({
         title: patch.title !== undefined ? patch.title : current.title,
         content,
-        wordCount: countWords(content),
+        wordCount: newCount,
+        status: patch.status !== undefined ? patch.status : current.status,
         updatedAt: now()
       })
       .where(eq(scenes.id, id))
       .run()
+    // US-27.1: registra il delta di parole nel giorno corrente.
+    this.recordDelta(current.projectId, newCount - current.wordCount)
     this.db.persist()
     return this.getScene(id)
+  }
+
+  /** Upsert delle parole nette scritte oggi (US-27.1). */
+  private recordDelta(projectId: string, delta: number): void {
+    if (delta === 0) return
+    const today = new Date().toISOString().slice(0, 10)
+    const existing = this.orm
+      .select()
+      .from(writingStats)
+      .where(and(eq(writingStats.projectId, projectId), eq(writingStats.date, today)))
+      .get()
+    if (existing) {
+      this.orm
+        .update(writingStats)
+        .set({ wordsAdded: existing.wordsAdded + delta })
+        .where(eq(writingStats.id, existing.id))
+        .run()
+    } else {
+      this.orm
+        .insert(writingStats)
+        .values({ id: uuid(), projectId, date: today, wordsAdded: delta })
+        .run()
+    }
+  }
+
+  getDailyStats(projectId: string, sinceDays: number): DailyStat[] {
+    const cutoff = new Date(Date.now() - sinceDays * 86400000).toISOString().slice(0, 10)
+    return this.orm
+      .select({ date: writingStats.date, wordsAdded: writingStats.wordsAdded })
+      .from(writingStats)
+      .where(eq(writingStats.projectId, projectId))
+      .all()
+      .filter((r) => r.date >= cutoff)
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }
+
+  /** Trova & sostituisci letterale (US-26.1). */
+  replaceText(
+    projectId: string,
+    find: string,
+    replaceWith: string,
+    opts: { sceneId?: string; matchCase?: boolean } = {}
+  ): ReplaceResult {
+    if (!find) return { scenes: 0, occurrences: 0 }
+    const all = this.listScenes(projectId).filter(
+      (s) => !opts.sceneId || s.id === opts.sceneId
+    )
+    let touched = 0
+    let occurrences = 0
+    for (const scene of all) {
+      let count = 0
+      let next: string
+      if (opts.matchCase) {
+        count = scene.content.split(find).length - 1
+        next = scene.content.split(find).join(replaceWith)
+      } else {
+        const re = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+        next = scene.content.replace(re, () => {
+          count += 1
+          return replaceWith
+        })
+      }
+      if (count > 0) {
+        this.updateScene(scene.id, { content: next })
+        touched += 1
+        occurrences += count
+      }
+    }
+    return { scenes: touched, occurrences }
   }
 
   deleteScene(id: string): boolean {

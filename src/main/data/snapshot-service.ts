@@ -299,6 +299,7 @@ export class SnapshotService {
       genre: d.project.genre,
       framework: d.project.framework,
       targetWordCount: d.project.targetWordCount,
+      deadline: d.project.deadline ?? null,
       status: 'active',
       ownerId: null,
       createdAt: now,

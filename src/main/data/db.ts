@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS projects (
   genre TEXT,
   framework TEXT,
   target_word_count INTEGER,
+  deadline TEXT,
   status TEXT NOT NULL DEFAULT 'active',
   owner_id TEXT,
   created_at TEXT NOT NULL,
@@ -33,10 +34,18 @@ CREATE TABLE IF NOT EXISTS scenes (
   title TEXT NOT NULL,
   content TEXT NOT NULL DEFAULT '',
   word_count INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'draft',
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS writing_stats (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  date TEXT NOT NULL,
+  words_added INTEGER NOT NULL DEFAULT 0
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wstats_project_date ON writing_stats(project_id, date);
 CREATE TABLE IF NOT EXISTS notes (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
@@ -162,7 +171,20 @@ CREATE INDEX IF NOT EXISTS idx_notes_project ON notes(project_id);
  *   sono considerati alla versione 1.
  */
 export const MIGRATIONS: { version: number; statements: string[] }[] = [
-  // { version: 2, statements: ["ALTER TABLE scenes ADD COLUMN ..."] }
+  {
+    version: 2, // Epic 26/27: stati scena, deadline progetto, statistiche scrittura
+    statements: [
+      "ALTER TABLE scenes ADD COLUMN status TEXT NOT NULL DEFAULT 'draft'",
+      'ALTER TABLE projects ADD COLUMN deadline TEXT',
+      `CREATE TABLE IF NOT EXISTS writing_stats (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        words_added INTEGER NOT NULL DEFAULT 0
+      )`,
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_wstats_project_date ON writing_stats(project_id, date)'
+    ]
+  }
 ]
 
 export const SCHEMA_VERSION = Math.max(1, ...MIGRATIONS.map((m) => m.version))

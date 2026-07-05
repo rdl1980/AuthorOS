@@ -167,6 +167,14 @@ export function registerIpc(
   ipc.handle('ms:noteDelete', (_e, id: string) => manuscript.deleteNote(id))
 
   ipc.handle('ms:stats', (_e, projectId: string) => manuscript.getStats(projectId))
+  ipc.handle(
+    'ms:replace',
+    (_e, projectId: string, find: string, replaceWith: string, opts?: { sceneId?: string; matchCase?: boolean }) =>
+      manuscript.replaceText(projectId, find, replaceWith, opts)
+  )
+  ipc.handle('ms:statsDaily', (_e, projectId: string, sinceDays: number) =>
+    manuscript.getDailyStats(projectId, sinceDays)
+  )
 
   // Author Voice / Style Profile (Epic 23)
   ipc.handle('style:list', (_e, projectId: string) => styles.list(projectId))

@@ -7,6 +7,11 @@ export interface ManuscriptModel {
   chapters: { title: string; scenes: { title: string; content: string }[] }[]
 }
 
+/** Rimuove le annotazioni non stampabili {>>...<<} dagli export (US-26.5). */
+export function stripAnnotations(markdown: string): string {
+  return markdown.replace(/\{>>[\s\S]*?<<\}/g, '').replace(/[ \t]+$/gm, '')
+}
+
 /** Assembla il modello del manoscritto da progetto, capitoli e scene ordinati. */
 export function assembleModel(project: Project, chapters: Chapter[], scenes: Scene[]): ManuscriptModel {
   return {
@@ -16,7 +21,7 @@ export function assembleModel(project: Project, chapters: Chapter[], scenes: Sce
       title: ch.title,
       scenes: scenes
         .filter((s) => s.chapterId === ch.id)
-        .map((s) => ({ title: s.title, content: s.content }))
+        .map((s) => ({ title: s.title, content: stripAnnotations(s.content) }))
     }))
   }
 }
