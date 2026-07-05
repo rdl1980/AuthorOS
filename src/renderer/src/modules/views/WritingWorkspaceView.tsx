@@ -140,6 +140,12 @@ export function WritingWorkspaceView(): JSX.Element {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
       await ms.sceneUpdate(id, patch)
+      // Salvataggio riuscito: la bozza di emergenza non serve più (US-30.4).
+      try {
+        localStorage.removeItem(`authoros:draft:${id}`)
+      } catch {
+        /* noop */
+      }
       if (project) setStats(await ms.stats(project.id))
       setSaving(false)
     }, 600)

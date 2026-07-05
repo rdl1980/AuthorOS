@@ -16,10 +16,12 @@ export interface AppSettings {
   lastProjectId: string | null
   /** Tour iniziale completato o saltato (US-25.1). */
   onboardingDone: boolean
+  /** Cartella dei backup automatici .authoros (US-30.1); null = disattivati. */
+  backupDir: string | null
 }
 
 export type SettingsUpdate = Partial<
-  Pick<AppSettings, 'provider' | 'model' | 'mode' | 'language' | 'lastProjectId' | 'onboardingDone'>
+  Pick<AppSettings, 'provider' | 'model' | 'mode' | 'language' | 'lastProjectId' | 'onboardingDone' | 'backupDir'>
 >
 
 /** Cataloghi modelli per provider (US-22.2). */
@@ -42,5 +44,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   hasAnthropicKey: false,
   hasOpenaiKey: false,
   lastProjectId: null,
-  onboardingDone: false
+  onboardingDone: false,
+  backupDir: null
 }

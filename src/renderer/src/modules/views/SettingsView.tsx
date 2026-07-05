@@ -157,6 +157,36 @@ export function SettingsView(): JSX.Element {
         {saving && <span className="text-xs text-muted">Salvataggio…</span>}
       </section>
 
+      {/* Backup automatici (US-30.1) */}
+      <section className="mt-4 rounded-2xl border border-line bg-panel/50 p-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-cyan">Backup</h3>
+        <p className="mt-1 text-xs text-muted">
+          Ogni 15 minuti (se ci sono modifiche) il progetto attivo viene salvato come file{' '}
+          <code>.authoros</code> nella cartella scelta — usa una cartella sincronizzata
+          (Dropbox/Drive/OneDrive) per avere copie fuori dal computer. Vengono conservati gli
+          ultimi 10 backup per progetto.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="min-w-0 flex-1 truncate rounded-lg border border-line bg-bg/40 px-3 py-2 text-sm text-muted">
+            {settings.backupDir ?? 'Nessuna cartella impostata (backup disattivati)'}
+          </span>
+          <button
+            className="rounded-lg bg-cyan px-3 py-2 text-sm font-semibold text-bg hover:opacity-90"
+            onClick={async () => setSettings(await window.authoros.settings.pickBackupDir())}
+          >
+            Scegli cartella…
+          </button>
+          {settings.backupDir && (
+            <button
+              className="rounded-lg border border-line px-3 py-2 text-sm text-muted hover:border-red hover:text-red"
+              onClick={() => patch({ backupDir: null })}
+            >
+              Disattiva
+            </button>
+          )}
+        </div>
+      </section>
+
       {/* Onboarding (Epic 25) */}
       <section className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel/50 p-4">
         <span className="text-sm text-muted">Introduzione all'app</span>

@@ -55,7 +55,8 @@ const api = {
     setKey: (provider: Exclude<AIProviderId, 'mock'>, key: string): Promise<AppSettings> =>
       ipcRenderer.invoke('settings:setKey', provider, key),
     clearKey: (provider: Exclude<AIProviderId, 'mock'>): Promise<AppSettings> =>
-      ipcRenderer.invoke('settings:clearKey', provider)
+      ipcRenderer.invoke('settings:clearKey', provider),
+    pickBackupDir: (): Promise<AppSettings> => ipcRenderer.invoke('settings:pickBackupDir')
   },
   style: {
     list: (projectId: string): Promise<StyleProfile[]> => ipcRenderer.invoke('style:list', projectId),
@@ -80,7 +81,10 @@ const api = {
       ipcRenderer.invoke('projects:duplicate', id),
     setArchived: (id: string, archived: boolean): Promise<Project | null> =>
       ipcRenderer.invoke('projects:setArchived', id, archived),
-    remove: (id: string): Promise<boolean> => ipcRenderer.invoke('projects:remove', id)
+    remove: (id: string): Promise<boolean> => ipcRenderer.invoke('projects:remove', id),
+    exportFile: (id: string): Promise<ExportResult> => ipcRenderer.invoke('proj:exportFile', id),
+    importFile: (): Promise<{ ok: boolean; project?: Project; error?: string }> =>
+      ipcRenderer.invoke('proj:importFile')
   },
   manuscript: {
     chapters: (projectId: string): Promise<Chapter[]> =>

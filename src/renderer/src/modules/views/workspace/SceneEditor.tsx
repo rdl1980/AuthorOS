@@ -63,9 +63,18 @@ const TOOLS: ToolButton[] = [
  * Il contenuto resta Markdown nel database (tiptap-markdown), così export,
  * import, word count e AI Editor continuano a lavorare sullo stesso formato.
  */
+/** Bozza di emergenza per il crash recovery (US-30.4). */
+interface PendingDraft {
+  content: string
+  ts: number
+}
+
+const draftKey = (sceneId: string): string => `authoros:draft:${sceneId}`
+
 export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
   const [title, setTitle] = useState(scene.title)
   const [words, setWords] = useState(() => countWords(scene.content))
+  const [recovered, setRecovered] = useState<PendingDraft | null>(null)
 
   const editor = useEditor({
     extensions: [
@@ -77,6 +86,12 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
     onUpdate: ({ editor: e }) => {
       const md = (e.storage.markdown as { getMarkdown: () => string }).getMarkdown()
       setWords(countWords(md))
+      // US-30.4: bozza di emergenza scritta subito (il salvataggio vero è debounced).
+      try {
+        localStorage.setItem(draftKey(scene.id), JSON.stringify({ content: md, ts: Date.now() }))
+      } catch {
+        // storage pieno/non disponibile: il salvataggio normale resta attivo
+      }
       onChange({ content: md })
     }
   })
@@ -86,10 +101,54 @@ export function SceneEditor({ scene, onChange, saving }: Props): JSX.Element {
     setTitle(scene.title)
     setWords(countWords(scene.content))
     if (editor && !editor.isDestroyed) editor.commands.setContent(scene.content)
+    // US-30.4: se esiste una bozza più recente dell'ultimo salvataggio (crash),
+    // proponi il recupero invece di applicarla in silenzio.
+    setRecovered(null)
+    try {
+      const raw = localStorage.getItem(draftKey(scene.id))
+      if (raw) {
+        const draft = JSON.parse(raw) as PendingDraft
+        if (draft.content !== scene.content && draft.ts > Date.parse(scene.updatedAt) + 2000) {
+          setRecovered(draft)
+        } else {
+          localStorage.removeItem(draftKey(scene.id))
+        }
+      }
+    } catch {
+      // bozza corrotta: ignorata
+    }
   }, [scene.id, editor]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const applyRecovered = (): void => {
+    if (!recovered || !editor) return
+    editor.commands.setContent(recovered.content)
+    setWords(countWords(recovered.content))
+    onChange({ content: recovered.content })
+    setRecovered(null)
+  }
+  const discardRecovered = (): void => {
+    localStorage.removeItem(draftKey(scene.id))
+    setRecovered(null)
+  }
 
   return (
     <div className="flex h-full flex-col">
+      {recovered && (
+        <div className="mb-2 flex items-center gap-2 rounded-lg border border-yellow/50 bg-yellow/10 px-3 py-2 text-sm">
+          <span className="text-yellow">
+            ⚠ Trovata una bozza non salvata più recente ({new Date(recovered.ts).toLocaleTimeString('it-IT')}).
+          </span>
+          <button
+            className="ml-auto rounded-md bg-yellow px-2 py-1 text-xs font-semibold text-bg hover:opacity-90"
+            onClick={applyRecovered}
+          >
+            Ripristina
+          </button>
+          <button className="rounded-md border border-line px-2 py-1 text-xs text-muted" onClick={discardRecovered}>
+            Ignora
+          </button>
+        </div>
+      )}
       <div className="mb-2 flex items-center gap-2">
         <input
           className="flex-1 rounded-lg bg-transparent px-2 py-1 text-xl font-semibold outline-none hover:bg-white/5 focus:bg-white/10"

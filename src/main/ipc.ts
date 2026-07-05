@@ -1,3 +1,4 @@
+import { dialog } from 'electron'
 import type { IpcMain } from 'electron'
 import type { AIRequest, AssistKind } from '@shared/ai'
 import type {
@@ -76,6 +77,43 @@ export function registerIpc(
     settings.setKey(provider, key)
   )
   ipc.handle('settings:clearKey', (_e, provider: LiveProvider) => settings.clearKey(provider))
+  ipc.handle('settings:pickBackupDir', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (canceled || !filePaths[0]) return settings.get()
+    return settings.update({ backupDir: filePaths[0] })
+  })
+
+  // Portabilita' progetto .authoros (US-30.2)
+  ipc.handle('proj:exportFile', async (_e, projectId: string) => {
+    const project = projects.get(projectId)
+    if (!project) return { ok: false, error: 'progetto non trovato' }
+    const safe = project.title.replace(/[<>:"/\|?*]+/g, '').trim() || 'progetto'
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath: `${safe}.authoros`,
+      filters: [{ name: 'Progetto AuthorOS', extensions: ['authoros'] }]
+    })
+    if (canceled || !filePath) return { ok: false, error: 'annullato' }
+    try {
+      return { ok: snapshots.writeExport(projectId, filePath), path: filePath }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    }
+  })
+  ipc.handle('proj:importFile', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [{ name: 'Progetto AuthorOS', extensions: ['authoros', 'json'] }]
+    })
+    if (canceled || !filePaths[0]) return { ok: false, error: 'annullato' }
+    try {
+      const project = snapshots.readImport(filePaths[0])
+      return { ok: true, project }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    }
+  })
 
   // Progetti (Epic 1)
   ipc.handle('projects:list', (_e, includeArchived?: boolean) => projects.list(includeArchived))

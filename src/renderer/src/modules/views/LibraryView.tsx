@@ -120,7 +120,7 @@ export function LibraryView(): JSX.Element {
       </div>
 
       {/* Toolbar */}
-      <div className="mt-4 flex items-center gap-2 text-sm text-muted">
+      <div className="mt-4 flex items-center gap-3 text-sm text-muted">
         <label className="flex cursor-pointer items-center gap-2">
           <input
             type="checkbox"
@@ -129,6 +129,19 @@ export function LibraryView(): JSX.Element {
           />
           Mostra archiviati
         </label>
+        <button
+          className="rounded-md border border-line px-2 py-1 text-xs hover:border-cyan"
+          onClick={async () => {
+            const res = await window.authoros.projects.importFile()
+            if (res.ok && res.project) {
+              await refresh()
+              open(res.project)
+            }
+          }}
+          title="Importa un progetto .authoros (US-30.2)"
+        >
+          📥 Importa progetto…
+        </button>
         {active && <span className="ml-auto text-cyan">Aperto: {active.title}</span>}
       </div>
 
@@ -178,6 +191,13 @@ export function LibraryView(): JSX.Element {
                 onClick={() => toggleArchive(p)}
               >
                 {p.status === 'archived' ? 'Ripristina' : 'Archivia'}
+              </button>
+              <button
+                className="rounded-lg border border-line px-3 py-1.5 text-xs text-muted hover:border-cyan hover:text-ink"
+                onClick={() => window.authoros.projects.exportFile(p.id)}
+                title="Esporta come file .authoros (US-30.2)"
+              >
+                📤
               </button>
             </div>
           </article>

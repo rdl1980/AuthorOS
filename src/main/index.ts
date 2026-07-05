@@ -66,8 +66,11 @@ app.whenReady().then(async () => {
 
   // Auto-snapshot del progetto attivo ogni 15 minuti, solo se cambiato (US-24.3).
   setInterval(() => {
-    const pid = settings.get().lastProjectId
-    if (pid) snapshots.autoSnapshot(pid)
+    const st = settings.get()
+    if (!st.lastProjectId) return
+    snapshots.autoSnapshot(st.lastProjectId)
+    // US-30.1: backup .authoros nella cartella scelta, solo se cambiato.
+    if (st.backupDir) snapshots.backupTo(st.backupDir, st.lastProjectId)
   }, 15 * 60 * 1000)
 
   createWindow()

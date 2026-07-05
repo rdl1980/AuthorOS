@@ -153,10 +153,26 @@ CREATE INDEX IF NOT EXISTS idx_scenes_project ON scenes(project_id);
 CREATE INDEX IF NOT EXISTS idx_notes_project ON notes(project_id);
 `
 
+/**
+ * Migrazioni versionate (US-30.3). Regole:
+ * - Il DDL sopra descrive lo schema COMPLETO corrente (per i DB nuovi).
+ * - Ogni modifica di schema va aggiunta ANCHE qui come migrazione, per i DB
+ *   esistenti. La versione è tracciata con PRAGMA user_version.
+ * - I DB creati prima del versionamento (user_version=0 ma tabelle presenti)
+ *   sono considerati alla versione 1.
+ */
+export const MIGRATIONS: { version: number; statements: string[] }[] = [
+  // { version: 2, statements: ["ALTER TABLE scenes ADD COLUMN ..."] }
+]
+
+export const SCHEMA_VERSION = Math.max(1, ...MIGRATIONS.map((m) => m.version))
+
 export interface DB {
   orm: SQLJsDatabase<typeof schema>
   /** Esporta lo stato in-memory su disco. Da chiamare dopo ogni mutazione. */
   persist(): void
+  /** Versione di schema effettiva dopo l'init (per test/diagnostica). */
+  schemaVersion: number
 }
 
 /**
@@ -169,8 +185,32 @@ export async function initDatabase(dataDir: string): Promise<DB> {
   const file = join(dataDir, 'authoros.sqlite')
 
   const SQL = await initSqlJs()
-  const sqldb = existsSync(file) ? new SQL.Database(readFileSync(file)) : new SQL.Database()
-  sqldb.run(DDL)
+  const isFresh = !existsSync(file)
+  const sqldb = isFresh ? new SQL.Database() : new SQL.Database(readFileSync(file))
+
+  const readVersion = (): number => {
+    const res = sqldb.exec('PRAGMA user_version')
+    return Number(res[0]?.values[0]?.[0] ?? 0)
+  }
+  const hasTables = (): boolean =>
+    sqldb.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='projects'").length > 0
+
+  let version = readVersion()
+  if (isFresh || !hasTables()) {
+    // DB nuovo: il DDL rappresenta già lo schema completo corrente.
+    sqldb.run(DDL)
+    version = SCHEMA_VERSION
+  } else {
+    if (version === 0) version = 1 // DB pre-versionamento = baseline
+    for (const m of MIGRATIONS) {
+      if (m.version > version) {
+        for (const stmt of m.statements) sqldb.run(stmt)
+        version = m.version
+      }
+    }
+    sqldb.run(DDL) // idempotente: eventuali tabelle nuove per DB già migrati
+  }
+  sqldb.run(`PRAGMA user_version = ${version}`)
 
   const orm = drizzle(sqldb, { schema })
   const persist = (): void => {
@@ -178,5 +218,5 @@ export async function initDatabase(dataDir: string): Promise<DB> {
   }
   persist() // garantisce l'esistenza del file al primo avvio
 
-  return { orm, persist }
+  return { orm, persist, schemaVersion: version }
 }

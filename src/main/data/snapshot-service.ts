@@ -1,7 +1,8 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { eq, inArray } from 'drizzle-orm'
+import type { Project } from '@shared/domain'
 import type { SnapshotMeta } from '@shared/search'
 import type { DB } from './db'
 import {
@@ -46,6 +47,15 @@ interface ProjectData {
 }
 
 const MAX_AUTO_SNAPSHOTS = 10
+const MAX_BACKUPS_PER_PROJECT = 10
+
+/** Formato del file di scambio .authoros (US-30.2). */
+export interface AuthorosFile {
+  format: 'authoros'
+  version: 1
+  exportedAt: string
+  data: ProjectData
+}
 
 /**
  * Snapshot locali del progetto (US-24.2/24.3): fotografie JSON complete in
@@ -245,6 +255,155 @@ export class SnapshotService {
     for (const r of d.worldElements ?? []) orm.insert(worldElements).values(r).run()
     this.db.persist()
     return true
+  }
+
+  // --- Export/Import .authoros (US-30.2) ------------------------------------
+
+  exportData(projectId: string): AuthorosFile | null {
+    const data = this.serialize(projectId)
+    if (!data) return null
+    return { format: 'authoros', version: 1, exportedAt: new Date().toISOString(), data }
+  }
+
+  writeExport(projectId: string, filePath: string): boolean {
+    const file = this.exportData(projectId)
+    if (!file) return false
+    writeFileSync(filePath, JSON.stringify(file), 'utf8')
+    return true
+  }
+
+  /**
+   * Importa un progetto da dati .authoros creando un NUOVO progetto con tutti
+   * gli id rimappati (nessuna collisione con progetti esistenti).
+   */
+  importData(file: AuthorosFile): Project {
+    if (file.format !== 'authoros' || !file.data?.project) {
+      throw new Error('file .authoros non valido')
+    }
+    const d = file.data
+    const orm = this.db.orm
+    const now = new Date().toISOString()
+    const remap = new Map<string, string>()
+    const rid = (oldId: string): string => {
+      const existing = remap.get(oldId)
+      if (existing) return existing
+      const fresh = randomUUID()
+      remap.set(oldId, fresh)
+      return fresh
+    }
+
+    const projectId = randomUUID()
+    const project: Project = {
+      id: projectId,
+      title: d.project.title,
+      genre: d.project.genre,
+      framework: d.project.framework,
+      targetWordCount: d.project.targetWordCount,
+      status: 'active',
+      ownerId: null,
+      createdAt: now,
+      updatedAt: now
+    }
+    orm.insert(projects).values(project).run()
+
+    for (const r of d.chapters)
+      orm.insert(chapters).values({ ...r, id: rid(r.id), projectId, createdAt: now, updatedAt: now }).run()
+    for (const r of d.scenes)
+      orm
+        .insert(scenes)
+        .values({ ...r, id: rid(r.id), projectId, chapterId: rid(r.chapterId), createdAt: now, updatedAt: now })
+        .run()
+    for (const r of d.notes)
+      orm
+        .insert(notes)
+        .values({
+          ...r,
+          id: randomUUID(),
+          projectId,
+          chapterId: r.chapterId ? rid(r.chapterId) : null,
+          sceneId: r.sceneId ? rid(r.sceneId) : null,
+          createdAt: now,
+          updatedAt: now
+        })
+        .run()
+    for (const r of d.beats)
+      orm.insert(beats).values({ ...r, id: rid(r.id), projectId, createdAt: now }).run()
+    for (const r of d.beatScenes)
+      orm
+        .insert(beatScenes)
+        .values({ id: randomUUID(), beatId: rid(r.beatId), sceneId: rid(r.sceneId) })
+        .run()
+    for (const r of d.styleProfiles)
+      orm
+        .insert(styleProfiles)
+        .values({ ...r, id: randomUUID(), projectId, createdAt: now, updatedAt: now })
+        .run()
+    for (const r of d.characters)
+      orm.insert(characters).values({ ...r, id: rid(r.id), projectId, createdAt: now, updatedAt: now }).run()
+    for (const r of d.relationships)
+      orm
+        .insert(relationships)
+        .values({ id: randomUUID(), projectId, fromId: rid(r.fromId), toId: rid(r.toId), label: r.label, createdAt: now })
+        .run()
+    for (const r of d.characterArcs)
+      orm
+        .insert(characterArcs)
+        .values({ ...r, id: rid(r.id), characterId: rid(r.characterId), createdAt: now, updatedAt: now })
+        .run()
+    for (const r of d.arcSteps)
+      orm
+        .insert(arcSteps)
+        .values({ ...r, id: randomUUID(), arcId: rid(r.arcId), chapterId: rid(r.chapterId), createdAt: now })
+        .run()
+    for (const r of d.timelineEvents)
+      orm.insert(timelineEvents).values({ ...r, id: rid(r.id), projectId, createdAt: now, updatedAt: now }).run()
+    for (const r of d.eventCharacters)
+      orm
+        .insert(eventCharacters)
+        .values({ id: randomUUID(), eventId: rid(r.eventId), characterId: rid(r.characterId) })
+        .run()
+    for (const r of d.worldElements ?? [])
+      orm.insert(worldElements).values({ ...r, id: randomUUID(), projectId, createdAt: now, updatedAt: now }).run()
+
+    this.db.persist()
+    return project
+  }
+
+  readImport(filePath: string): Project {
+    const parsed = JSON.parse(readFileSync(filePath, 'utf8')) as AuthorosFile
+    return this.importData(parsed)
+  }
+
+  // --- Backup su cartella esterna (US-30.1) ----------------------------------
+
+  private lastBackupHash = new Map<string, string>()
+
+  /**
+   * Scrive un backup .authoros nella cartella scelta, solo se i dati sono
+   * cambiati dall'ultimo backup; mantiene gli ultimi MAX_BACKUPS_PER_PROJECT.
+   */
+  backupTo(dir: string, projectId: string): { written: boolean; path?: string } {
+    if (!existsSync(dir)) return { written: false }
+    const file = this.exportData(projectId)
+    if (!file) return { written: false }
+    const hash = createHash('sha1').update(JSON.stringify(file.data)).digest('hex')
+    if (this.lastBackupHash.get(projectId) === hash) return { written: false }
+    this.lastBackupHash.set(projectId, hash)
+
+    const safeTitle = file.data.project.title.replace(/[<>:"/\\|?*]+/g, '').trim() || 'progetto'
+    const stamp = file.exportedAt.replace(/[:.]/g, '-')
+    const marker = `.${projectId.slice(0, 8)}.`
+    const name = `${safeTitle}${marker}${stamp}.authoros`
+    writeFileSync(join(dir, name), JSON.stringify(file), 'utf8')
+
+    // Rotazione: tiene gli ultimi N backup di QUESTO progetto.
+    const mine = readdirSync(dir)
+      .filter((f) => f.includes(marker) && f.endsWith('.authoros'))
+      .sort()
+      .reverse()
+    for (const old of mine.slice(MAX_BACKUPS_PER_PROJECT)) rmSync(join(dir, old))
+
+    return { written: true, path: join(dir, name) }
   }
 
   /**
